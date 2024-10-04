@@ -1,0 +1,7 @@
+{
+    "python.analysis.extraPaths": [
+        "./zipbird/utils",
+        "${workspaceFolder}"
+    ],
+     "jupyter.notebookFileRoot": "${workspaceFolder}"
+}
