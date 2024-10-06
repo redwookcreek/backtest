@@ -8,7 +8,6 @@ from zipline.assets import Equity
 from zipline.protocol import Positions
 from zipline.pipeline.data import USEquityPricing
 
-EXTRA_LENGTH = 100
 
 class S3MRShort(BaseStrategy):
     
@@ -44,12 +43,13 @@ class S3MRShort(BaseStrategy):
                          positions:Positions,
                          pipeline_data:pd.DataFrame,
                          filtered_pipeline_data:pd.DataFrame) -> list[Signal]:
-        RSI = col_name.rsi_name(self.params['rsi_period'])
-        buy_list = filtered_pipeline_data[RSI].sort_values(ascending=False).dropna()
+        ADX = col_name.adx_name(self.params['adx_period'])
+        buy_list = filtered_pipeline_data[ADX].sort_values(ascending=False).dropna()
         # filter out already exist positions
-        buy_list = buy_list[~buy_list.index.isin(positions.keys())]
-        n_pos_to_open = (self.params['max_positions'] - len(positions)) * self.params['open_position_factor']
-        buy_list = buy_list.index.tolist()[:n_pos_to_open]
+        buy_list = self.get_buy_list(buy_list,
+                                     positions,
+                                     self.params['max_positions'],
+                                     self.params['open_position_factor'])
         return [self._to_signal(stock, pipeline_data) for stock in buy_list]
     
     def _to_signal(self, stock:Equity, pipeline_data:pd.DataFrame) -> Signal:

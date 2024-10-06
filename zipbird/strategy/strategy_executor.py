@@ -3,7 +3,7 @@ import pandas as pd
 from zipbird.utils.logger_util import DebugLogger
 from zipbird.basic.order import Order, ShareOrder
 from zipbird.basic.signal import Signal
-from zipbird.basic.types import CloseStockNotInPortfolioException, OpenClose, Portfolio, Positions
+from zipbird.basic.types import CloseStockNotInPortfolioException, Equity, OpenClose, Portfolio, Positions
 from zipbird.strategy.pipeline_maker import PipelineMaker
 from zipbird.position_manager.position_manager import PositionManager
 from zipbird.position_manager.position_sizer import PositionSizer
