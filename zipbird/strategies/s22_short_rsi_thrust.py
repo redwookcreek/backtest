@@ -9,11 +9,10 @@ from zipline.protocol import Positions
 from zipline.pipeline.data import USEquityPricing
 
 
-class S21ShortRSIThrust(BaseStrategy):
+class S22ShortRSIThrust(BaseStrategy):
     
     def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
         """Create zipline pipeline"""
-        yesterday_close = USEquityPricing.close.latest
 
         pipeline_maker.add_dollar_volume_rank_universe(
             min_close=self.params['min_price'],

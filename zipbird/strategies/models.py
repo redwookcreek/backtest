@@ -6,6 +6,7 @@ from zipbird.strategy.strategy_executor import StrategyExecutor
 from zipbird.strategies.s1_weekly_rotation import S1WeeklyRotationStrategy
 from zipbird.strategies.s2_mean_reversion_long_strategy import S2MRLong
 from zipbird.strategies.s3_mean_reversion_short_strategy import S3MRShort
+from zipbird.strategies.s22_short_rsi_thrust import S22ShortRSIThrust
 
 
 PARAMS_S1_WEEKLY_SP500 = dict(
@@ -150,7 +151,7 @@ PARAMS_S22_SHORT_RSI_THRUST = dict(
 )
 
 SE_S22_SHORT_RSI_THRUST = StrategyExecutor(
-    strategy=S21LongMOM(PARAMS_S22_SHORT_RSI_THRUST),
+    strategy=S22ShortRSIThrust(PARAMS_S22_SHORT_RSI_THRUST),
     position_sizer=ATRPositionSizer(PARAMS_S22_SHORT_RSI_THRUST),
 )
 STRATEGY_FUNC_MAP = {
