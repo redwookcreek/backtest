@@ -2,7 +2,7 @@ import pandas as pd
 
 from zipbird.basic.order import Order, ShareOrder
 from zipbird.basic.signal import Signal
-from zipbird.basic.stop import FixStop, PercentProfitTarget, StopOrder
+from zipbird.basic.stop import FixStop, PercentProfitTarget, PercentTrailingStop, StopOrder
 from zipbird.basic.types import Equity, Portfolio
 from zipbird.strategy import pipeline_column_names as colume_names
 from zipbird.position_manager.position_sizer import PositionSizer
@@ -28,18 +28,15 @@ class ATRPositionSizer(PositionSizer):
                             amount=amount,
                             limit_price=signal.limit_price)
             
-            target_percent = self.params.get('price_target_percent', 0)
-            if target_percent:
-                target = PercentProfitTarget(signal.long_short, target_percent)
-            else:
-                target = None
+            
             # Attach stop loss
             order.add_stop(StopOrder(
                 initial_stop=FixStop(
                     signal.long_short,
                     self._get_stop_loss_diff(signal.stock, pipeline_data)),
                 time_stop=self.params.get('stop_loss_days', 0),
-                profit_target=target))
+                profit_target=self._get_target_percent(signal),
+                trailing=self._get_tailing_stop(signal)))
             orders.append(order)                          
         return orders
                     
@@ -54,3 +51,17 @@ class ATRPositionSizer(PositionSizer):
         return min(
             int(portfolio_value * self.params['fraction_risk'] / risk),
             int(portfolio_value * self.params['max_equity_per_position'] / price))
+    
+    def _get_target_percent(self, signal):
+        target_percent = self.params.get('price_target_percent', 0)
+        if target_percent:
+            return PercentProfitTarget(signal.long_short, target_percent)
+        else:
+            return None
+        
+    def _get_tailing_stop(self, signal):
+        trailing_percent = self.params.get('trailing_stop_percent', 0)
+        if trailing_percent:
+            return PercentTrailingStop(signal.long_short, trailing_percent)
+        else:
+            return None

@@ -155,4 +155,4 @@ cython_debug/
 
 logs/
 results/
-notebook/*.ipynb
+*.ipynb

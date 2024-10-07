@@ -83,9 +83,9 @@ class Stop:
             raise MismatchLongShortError('All stops must be of the same type')
         long_or_short = long_or_short.pop()
         if long_or_short == LongShort.Long:
-            return min(stop.get_stop_price() for stop in stops)
-        else:
             return max(stop.get_stop_price() for stop in stops)
+        else:
+            return min(stop.get_stop_price() for stop in stops)
 
 # stop price should not exceed 50%
 MAX_STOP_PERCENT = 0.5
@@ -124,10 +124,12 @@ class PercentTrailingStop(TrailingStop):
     def update_stop_price(self, data) -> None:
         last_close = data[COL_CLOSE]
         if self.long_or_short == LongShort.Long:
-            self.stop_price = max(self.stop_price or 0,
+            cur_stop = self.stop_price if self.stop_price else 0
+            self.stop_price = max(cur_stop,
                                   last_close * (1 - self.trailing_percent))
         else:
-            self.stop_price = min(self.stop_price or float('inf'),
+            cur_stop = self.stop_price if self.stop_price else float('inf')
+            self.stop_price = min(cur_stop,
                                   last_close * (1 + self.trailing_percent))
 
     def __str__(self):

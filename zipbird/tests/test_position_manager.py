@@ -4,7 +4,7 @@ from unittest.mock import Mock, call
 import pandas as pd
 
 from zipbird.basic.order import ShareOrder
-from zipbird.basic.stop import FixStop, PercentProfitTarget, StopOrder
+from zipbird.basic.stop import FixStop, PercentProfitTarget, PercentTrailingStop, StopOrder
 from zipbird.basic.types import Equity, LongShort, Position
 from zipbird.position_manager.position_manager import DuplicatePendingOrderError, MismatchedManagedOrders, PendingOrder, PositionManager, UnhandledOrderException, UnknownFilledOrderError
 from zipline.finance import execution as zipline_execution
@@ -216,8 +216,59 @@ class TestPositionManager(unittest.TestCase):
         }
         position_manager.managed_orders[AMZN].add_stop(
             StopOrder(initial_stop=FixStop(LongShort.Long, 10)))
-        position_manager.managed_orders[AMZN].stop.do_maintenance(open_price=120, data=None)
+        postions = {AMZN: Position(AMZN, 100, 120)}
+        position_manager._adjust_stop_orders(
+            positions=postions,
+            data=pd.DataFrame({'close': {AMZN: 100}}))
         self.assertEqual(position_manager.managed_orders[AMZN].stop.get_stop_price(), 110)
+
+    def test_adjust_trailing_stop(self):
+        debug_logger = Mock()
+        position_manager = PositionManager(debug_logger)
+        position_manager.managed_orders = {
+            AMZN: ShareOrder.make_open_long(AMZN, 100),
+        }
+        position_manager.managed_orders[AMZN].add_stop(
+            StopOrder(trailing=PercentTrailingStop(LongShort.Long, 0.20)))
+        data = pd.DataFrame({
+            'close': {
+                AMZN: 100,
+                MSFT: 200,
+            },
+            'atr': {
+                AMZN: 1,
+                MSFT: 2,
+            }
+        })
+        positions = {AMZN: Position(AMZN, 100, 100)}
+        position_manager._adjust_stop_orders(
+            positions=positions,
+            data=data)
+        self.assertAlmostEqual(position_manager.managed_orders[AMZN].stop.get_stop_price(), 80.0)
+
+    def test_adjust_trailing_stop_short(self):
+        debug_logger = Mock()
+        position_manager = PositionManager(debug_logger)
+        position_manager.managed_orders = {
+            AMZN: ShareOrder.make_open_short(AMZN, 100),
+        }
+        position_manager.managed_orders[AMZN].add_stop(
+            StopOrder(trailing=PercentTrailingStop(LongShort.Short, 0.20)))
+        data = pd.DataFrame({
+            'close': {
+                AMZN: 100,
+                MSFT: 200,
+            },
+            'atr': {
+                AMZN: 1,
+                MSFT: 2,
+            }
+        })
+        positions = {AMZN: Position(AMZN, 100, 100)}
+        position_manager._adjust_stop_orders(
+            positions=positions,
+            data=data)
+        self.assertAlmostEqual(position_manager.managed_orders[AMZN].stop.get_stop_price(), 120.0)
 
     ###########################################################################
     # _close_out_positions

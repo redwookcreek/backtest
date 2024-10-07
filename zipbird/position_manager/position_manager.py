@@ -24,7 +24,7 @@ class PendingOrder:
         self.order = order
         self.zipline_order_id = None
     
-    def send_order(self, order_api):
+    def send_order(self, order_api, is_stop_order):
         sign = self.order.get_sign()
         if isinstance(self.order, PercentOrder):
             self.zipline_order_id = order_api.order_target_percent(
@@ -34,7 +34,7 @@ class PendingOrder:
                 self.order.stock, 
                 sign * self.order.amount,
                 style=zipline_execution.LimitOrder(self.order.limit_price))
-        elif self.order.stop:
+        elif is_stop_order and self.order.stop:
             self.zipline_order_id = order_api.order(
                 self.order.stock, sign * self.order.amount,
                 style=zipline_execution.StopOrder(self.order.stop.get_stop_price()))
@@ -167,9 +167,9 @@ class PositionManager:
                 {position_assets}
                 """)
         
-    def _make_and_send_pending_order(self, order:Order):
+    def _make_and_send_pending_order(self, order:Order, is_stop_order:bool):
         pending_order = PendingOrder(order)
-        pending_order.send_order(self.order_api)
+        pending_order.send_order(self.order_api, is_stop_order)
         if order.stock in self.pending_orders:
             raise DuplicatePendingOrderError(
                 'Pending order already exists for %s: to add: %s, existing: %s' % (
@@ -183,7 +183,7 @@ class PositionManager:
 
     def send_orders(self, orders:list[Order]):
         for order in orders:
-            self._make_and_send_pending_order(order)
+            self._make_and_send_pending_order(order, is_stop_order=False)
 
     def _cancel_pending_orders(self, today:datetime.date, positions:Positions):
         all_open_orders = sum(self.order_api.get_open_orders().values(), [])
@@ -217,7 +217,7 @@ class PositionManager:
             if not managed_order.stop:
                 continue
             position = positions[asset]
-            managed_order.stop.do_maintenance(position.cost_basis, data)
+            managed_order.stop.do_maintenance(position.cost_basis, data.loc[asset])
 
     def _close_out_positions(self, positions:Positions, data:pd.DataFrame):
         
@@ -240,13 +240,15 @@ class PositionManager:
                     3, 
                     'Closed out position with target order %s' % managed_order.stock)
                 self._make_and_send_pending_order(
-                    managed_order.make_opposite_order(keep_stop=False, keep_limit=False))
+                    managed_order.make_opposite_order(keep_stop=False, keep_limit=False),
+                    is_stop_order=False)
             elif stop_order_status == StopOrderStatus.TIME_STOP:
                 self.debug_logger.debug_print(
                     3,
                     'Closed out position with time stop order %s' % managed_order.stock)
                 self._make_and_send_pending_order(
-                    managed_order.make_opposite_order(keep_stop=False, keep_limit=False))
+                    managed_order.make_opposite_order(keep_stop=False, keep_limit=False),
+                    is_stop_order=False)
             else:
                 self.debug_logger.debug_print(
                     5, 'Position not closed out %s' % managed_order.stock)
@@ -259,5 +261,6 @@ class PositionManager:
             if asset in self.pending_orders:
                 continue
             self._make_and_send_pending_order(
-                managed_order.make_opposite_order(keep_stop=True, keep_limit=False))
+                managed_order.make_opposite_order(keep_stop=True, keep_limit=False),
+                is_stop_order=True)
     
