@@ -84,7 +84,7 @@ PARAMS_S3_MR_SHORT = dict(
     atr_percent_limit=4,  # 4%
     adx_period=7,
     rsi_lower_limit=0,
-    rsi_upper_limit=30,
+    rsi_upper_limit=90,
     adx_lower_limit=45,
     adx_upper_limit=100,
     days_up=3,
@@ -112,7 +112,7 @@ PARAMS_S21_LONG_MOM = dict(
     fast_sma_period=25,
     slow_sma_period=50,
     roc_period=200,
-    atr_period=10,
+    atr_period=20,
     
     max_positions=10,
     fraction_risk=0.02,  # 2% risk per position
