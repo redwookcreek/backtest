@@ -6,7 +6,6 @@ from zipbird.strategy import pipeline_column_names as col_name
 
 from zipline.assets import Equity
 from zipline.protocol import Positions
-from zipline.pipeline.data import USEquityPricing
 
 
 class S22ShortRSIThrust(BaseStrategy):

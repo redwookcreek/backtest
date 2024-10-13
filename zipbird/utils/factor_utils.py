@@ -109,7 +109,7 @@ class StdFactorPercent(CustomFactor):
         out[:] = (std / close_sma) * 100
 
 
-class StdFactorPercentileRank(CustomFactor):
+class StdPercentileFactor(CustomFactor):
     inputs = (USEquityPricing.close,)
     window_length = 50
     

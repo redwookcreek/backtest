@@ -20,7 +20,6 @@ class S3MRShort(BaseStrategy):
             max_rank=self.params['dollar_volume_rank_max'],
             window_length=self.params['dollar_volume_rank_window'],
         )
-        sma = pipeline_maker.add_sma(self.params['sma_period'])
         rsi = pipeline_maker.add_rsi(self.params['rsi_period'])
         atr = pipeline_maker.add_atr(self.params['atr_period'])
         adx = pipeline_maker.add_adx(self.params['adx_period'])
@@ -28,7 +27,6 @@ class S3MRShort(BaseStrategy):
         consecutive_up = pipeline_maker.add_consecutive_up(self.params['days_up'])
         pipeline_maker.add_filter(
             filter=(
-                (yesterday_close > sma) &
                 (rsi >= self.params['rsi_lower_limit']) &
                 (rsi <= self.params['rsi_upper_limit']) &
                 (atrp >= self.params['atr_percent_limit']) &

@@ -15,7 +15,6 @@ class S21LongMOM(BaseStrategy):
     
     def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
         """Create zipline pipeline"""
-        yesterday_close = USEquityPricing.close.latest
 
         pipeline_maker.add_dollar_volume_rank_universe(
             min_close=self.params['min_price'],

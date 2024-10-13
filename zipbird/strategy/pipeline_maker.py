@@ -82,6 +82,12 @@ class PipelineMaker:
             factor=factor_utils.StdFactorPercent(window_length=period,
                                                  mask=self.universe))
     
+    def add_vol_percentile(self, period):
+        return self._maybe_add_column(
+            name=col_name.vol_percentile_name(period),
+            factor=factor_utils.StdPercentileFactor(window_length=period,
+                                                        mask=self.universe))
+
     def add_roc(self, period):
         return self._maybe_add_column(
             name=col_name.roc_name(period),

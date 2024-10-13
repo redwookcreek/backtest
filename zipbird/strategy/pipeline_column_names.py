@@ -24,8 +24,13 @@ def vol_name(period):
     return f'vol_{period}'
 
 
+def vol_percentile_name(period):
+    return f'vol%tile_{period}'
+
+
 def roc_name(period):
     return f'roc_{period}'
+
 
 def consecutive_up_name(period):
     return f'{period}_up'

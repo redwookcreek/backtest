@@ -55,6 +55,19 @@ class PercentProfitTarget(ProfitTarget):
     def __str__(self):
         return f'PercentProfitTarget(long_or_short={self.long_or_short}, target_percent={self.target_percent})'
 
+class FixProfitTarget(ProfitTarget):
+    """Profit target that is certain price away from opening class"""
+    def __init__(self, long_or_short: LongShort, diff: float):
+        super().__init__(long_or_short)
+        self.diff = diff
+
+    def update_target_with_open_price(self, open_price: float):
+        sign = 1 if self.long_or_short == LongShort.Long else -1
+        self.target_price = open_price + sign * self.diff
+
+    def __str__(self):
+        return f'FixProfitTarget(long_or_short={self.long_or_short}, diff={self.diff:.2f})'
+
 class Stop:
     """A stop price"""
 
