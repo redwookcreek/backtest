@@ -9,9 +9,13 @@ from zipbird.strategy.pipeline_maker import PipelineMaker
 
 class BaseStrategy:
     """Base strategy. A strategy provides open/close signals"""
-    def __init__(self, params):
+    def __init__(self, strategy_name, params):
+        self.strategy_name = strategy_name
         self.params = params
 
+    def get_name(self):
+        return self.strategy_name
+    
     def get_params(self):
         return self.params
 

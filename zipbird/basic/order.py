@@ -1,4 +1,5 @@
 """Order to send to the broker"""
+import uuid
 
 from zipbird.basic.stop import StopOrder
 from zipbird.basic.types import OpenClose, LongShort
@@ -17,6 +18,7 @@ class Order:
     stop: StopOrder | None
     
     def __init__(self, stock, open_close:OpenClose, long_short:LongShort, limit_price:float=None):
+        self.uuid = uuid.uuid4()
         self.stock = stock
         self.open_close = open_close
         self.long_short = long_short
@@ -48,12 +50,22 @@ class Order:
             self.long_short,
             self.limit_price)
         order.bar_count = self.bar_count
+        order.uuid = self.uuid
         if keep_stop:
             order.stop = self.stop
         if not keep_limit:
             order.limit_price = None
         
         return order
+ 
+    def get_percent_size(self):
+        return None
+        
+    def get_initial_stop_diff(self):
+        if self.stop and self.stop.initial_stop:
+            return self.stop.initial_stop.diff_price
+        else:
+            return None
 
     def __eq__(self, value: object) -> bool:
         return (self.stock == value.stock and 
@@ -142,6 +154,9 @@ class PercentOrder(Order):
         super().__init__(stock, open_close, long_short, limit_price)
         self.target_percent = target_percent
 
+    def get_percent_size(self):
+        return self.target_percent
+    
     def _target_percent_str(self):
         if self.target_percent is None:
             return '---'

@@ -21,6 +21,7 @@ class TestOrder(unittest.TestCase):
         self.assertEqual(order.open_close, OpenClose.Open)
         self.assertEqual(order.long_short, LongShort.Short)
         self.assertEqual(order.amount, 100)
+        self.assertEqual(order.get_percent_size(), None)
 
     def test_create_percent_order_long(self):
         order = PercentOrder('AAPL', OpenClose.Open, LongShort.Long, target_percent=0.1)
@@ -28,6 +29,7 @@ class TestOrder(unittest.TestCase):
         self.assertEqual(order.open_close, OpenClose.Open)
         self.assertEqual(order.long_short, LongShort.Long)
         self.assertEqual(order.target_percent, 0.1)
+        self.assertEqual(order.get_percent_size(), 0.1)
 
     def test_create_percent_order_long_limit_price(self):
         order = PercentOrder('AAPL', OpenClose.Open, LongShort.Long, target_percent=0.1, limit_price=12.)

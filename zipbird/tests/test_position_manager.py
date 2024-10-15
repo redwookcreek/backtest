@@ -39,7 +39,9 @@ class TestPositionManager(unittest.TestCase):
     ###########################################################################
     def test_on_order_filled_open_long(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
+        position_manager.order_api = Mock()
         share_order = ShareOrder.make_open_long(AMZN, 100)
         position_manager.pending_orders = {
             AMZN: PendingOrder(share_order),
@@ -52,7 +54,9 @@ class TestPositionManager(unittest.TestCase):
 
     def test_on_order_filled_close(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
+        position_manager.order_api = Mock()
         open_share_order = ShareOrder.make_open_long(AMZN, 100)
         close_share_order = ShareOrder.make_close_long(AMZN, 100)
         position_manager.pending_orders = {
@@ -68,7 +72,9 @@ class TestPositionManager(unittest.TestCase):
 
     def test_on_order_filled_unknown(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
+        position_manager.order_api = Mock()
         with self.assertRaises(UnknownFilledOrderError):
             position_manager.on_order_filled(AMZN, -100, 100, 'market')
 
@@ -77,7 +83,8 @@ class TestPositionManager(unittest.TestCase):
     ###########################################################################
     def test_verify_managed_orders_mismatched_managed_orders(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         position_manager.managed_orders = {
             AMZN: ShareOrder.make_open_long(AMZN, 100),
         }
@@ -90,7 +97,8 @@ class TestPositionManager(unittest.TestCase):
 
     def test_verify_managed_orders_matched(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         position_manager.managed_orders = {
             AMZN: ShareOrder.make_open_long(AMZN, 100),
         }
@@ -102,7 +110,8 @@ class TestPositionManager(unittest.TestCase):
 
     def test_verify_managed_orders_matched_with_auto_close_date(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         amzn = asset('AMZN',
                      auto_close_date=pd.Timestamp(datetime.date(2024, 1, 2) ))
         msft = asset('MSFT',
@@ -121,7 +130,8 @@ class TestPositionManager(unittest.TestCase):
     ###########################################################################
     def test_send_orders(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         order_api = Mock()
         position_manager.order_api = order_api
         position_manager.send_orders([
@@ -141,7 +151,8 @@ class TestPositionManager(unittest.TestCase):
 
     def test_send_orders_duplicate(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         order_api = Mock()
         position_manager.order_api = order_api
         with self.assertRaises(DuplicatePendingOrderError):
@@ -155,7 +166,8 @@ class TestPositionManager(unittest.TestCase):
     ###########################################################################
     def test_cancel_pending_orders_unfilled(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         order_api = Mock()
         position_manager.order_api = order_api
         open_order = Mock(id='123')
@@ -174,7 +186,8 @@ class TestPositionManager(unittest.TestCase):
 
     def test_cancel_pending_orders_expired(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         order_api = Mock()
         position_manager.order_api = order_api
         order_api.get_open_orders.return_value = {AMZN: []}
@@ -193,7 +206,8 @@ class TestPositionManager(unittest.TestCase):
 
     def test_cancel_pending_orders_unknown_order(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         order_api = Mock()
         position_manager.order_api = order_api
         order_api.get_open_orders.return_value = {}
@@ -210,7 +224,8 @@ class TestPositionManager(unittest.TestCase):
     ###########################################################################
     def test_adjust_stop_orders(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         position_manager.managed_orders = {
             AMZN: ShareOrder.make_open_long(AMZN, 100),
         }
@@ -224,7 +239,8 @@ class TestPositionManager(unittest.TestCase):
 
     def test_adjust_trailing_stop(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         position_manager.managed_orders = {
             AMZN: ShareOrder.make_open_long(AMZN, 100),
         }
@@ -248,7 +264,8 @@ class TestPositionManager(unittest.TestCase):
 
     def test_adjust_trailing_stop_short(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         position_manager.managed_orders = {
             AMZN: ShareOrder.make_open_short(AMZN, 100),
         }
@@ -275,7 +292,8 @@ class TestPositionManager(unittest.TestCase):
     ###########################################################################
     def test_close_out_positions_trigger_stop(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         order_api = Mock()
         position_manager.order_api = order_api
         position_manager.managed_orders = {
@@ -295,7 +313,8 @@ class TestPositionManager(unittest.TestCase):
 
     def test_close_out_positions_trigger_target_reached(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         order_api = Mock()
         position_manager.order_api = order_api
         position_manager.managed_orders = {
@@ -312,7 +331,8 @@ class TestPositionManager(unittest.TestCase):
         
     def test_close_out_positions_trigger_target_not_reached(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         order_api = Mock()
         position_manager.order_api = order_api
         position_manager.managed_orders = {
@@ -329,7 +349,8 @@ class TestPositionManager(unittest.TestCase):
 
     def test_close_out_positions_trigger_time_stop(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         order_api = Mock()
         position_manager.order_api = order_api
         position_manager.managed_orders = {
@@ -354,7 +375,8 @@ class TestPositionManager(unittest.TestCase):
     ###########################################################################
     def test_send_out_stop_orders_long(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         order_api = Mock()
         position_manager.order_api = order_api
         position_manager.managed_orders = {
@@ -369,7 +391,8 @@ class TestPositionManager(unittest.TestCase):
 
     def test_send_out_stop_orders_short(self):
         debug_logger = Mock()
-        position_manager = PositionManager(debug_logger)
+        replay_container = Mock()
+        position_manager = PositionManager(debug_logger, replay_container)
         order_api = Mock()
         position_manager.order_api = order_api
         position_manager.managed_orders = {

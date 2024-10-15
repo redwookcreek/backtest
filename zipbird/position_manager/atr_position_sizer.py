@@ -29,7 +29,6 @@ class ATRPositionSizer(PositionSizer):
                             amount=amount,
                             limit_price=signal.limit_price)
             
-            
             # Attach stop loss
             order.add_stop(StopOrder(
                 initial_stop=FixStop(

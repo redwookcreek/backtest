@@ -1,11 +1,13 @@
 import datetime
 from zipbird.basic.order import Order, PercentOrder
-from zipbird.basic.types import Equity, LongShort, OpenClose, Positions, StopOrderStatus
+from zipbird.basic.types import Equity, OpenClose, Positions, StopOrderStatus
 
 import pandas as pd
 
 from zipline import api as zipline_api
 from zipline.finance import execution as zipline_execution
+
+from zipbird.replay.order_container import OrderContainer
 
 class DuplicatePendingOrderError(Exception):
     pass
@@ -72,7 +74,7 @@ class PositionManager:
     pending_orders: dict[Equity, PendingOrder]
     managed_orders: dict[Equity, Order]
 
-    def __init__(self, debug_logger):
+    def __init__(self, debug_logger, replay_container:OrderContainer):
         # Pending orders are orders entered in last session
         # Pending order may be filled during last session, in that case
         # it will be moved to managed orders.
@@ -85,6 +87,7 @@ class PositionManager:
         self.managed_orders = {}
         self.order_api = zipline_api
         self.debug_logger = debug_logger
+        self.replay_container = replay_container
 
     def get_day_count(self, asset):
         return self.managed_orders[asset].get_bar_count()
@@ -105,6 +108,7 @@ class PositionManager:
                         price:float,
                         amount:int,
                         order):
+        today = self.order_api.get_datetime().date()
         if asset in self.pending_orders:
             pending_order = self.pending_orders.pop(asset)
             assert pending_order.zipline_order_id == order.id, \
@@ -114,8 +118,13 @@ class PositionManager:
                 'Pending order filled %s %d' % (asset, amount))
             if pending_order.order.open_close == OpenClose.Close:
                 self.managed_orders.pop(asset)
+                self.replay_container.add_close_order(pending_order.order, today, price)
             else:
                 self.managed_orders[asset] = pending_order.order
+                self.replay_container.add_open_order(
+                    open_date=today,
+                    open_price=price,
+                    open_order=pending_order.order)
         else:
             raise UnknownFilledOrderError('Order filled for unknown asset %s: %s' % (asset, order))
 

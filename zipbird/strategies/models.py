@@ -38,12 +38,12 @@ PARAMS_S1_WEEKLY_1000['use_spx'] = False
 PARAMS_S1_WEEKLY_1000['rebalance_by_vol'] = True
 
 SE_S1_WEEKLY_ROTATION_SP500 = StrategyExecutor(
-        strategy=S1WeeklyRotationStrategy(PARAMS_S1_WEEKLY_SP500), 
+        strategy=S1WeeklyRotationStrategy('s1_sp500', PARAMS_S1_WEEKLY_SP500), 
         position_sizer=RotationPositionSizer(PARAMS_S1_WEEKLY_SP500),
 )
 
 SE_S1_WEEKLY_ROTATION_1000 = StrategyExecutor(
-        strategy=S1WeeklyRotationStrategy(PARAMS_S1_WEEKLY_1000), 
+        strategy=S1WeeklyRotationStrategy('s1_all', PARAMS_S1_WEEKLY_1000), 
         position_sizer=RotationPositionSizer(PARAMS_S1_WEEKLY_1000),
 )
 
@@ -73,7 +73,7 @@ PARAMS_S2_MR_LONG = dict(
 )
 
 SE_S2_MR_LONG = StrategyExecutor(
-        strategy=S2MRLong(PARAMS_S2_MR_LONG),
+        strategy=S2MRLong('s2', PARAMS_S2_MR_LONG),
         position_sizer=ATRPositionSizer(PARAMS_S2_MR_LONG))
 
 PARAMS_S3_MR_SHORT = dict(
@@ -102,7 +102,7 @@ PARAMS_S3_MR_SHORT = dict(
 )
 
 SE_S3_MR_SHORT = StrategyExecutor(
-        strategy=S3MRShort(PARAMS_S3_MR_SHORT),
+        strategy=S3MRShort('s3', PARAMS_S3_MR_SHORT),
         position_sizer=ATRPositionSizer(PARAMS_S3_MR_SHORT))
 
 PARAMS_S21_LONG_MOM = dict(
@@ -124,7 +124,7 @@ PARAMS_S21_LONG_MOM = dict(
 )
 
 SE_S21_LONG_MOM = StrategyExecutor(
-    strategy=S21LongMOM(PARAMS_S21_LONG_MOM),
+    strategy=S21LongMOM('s21', PARAMS_S21_LONG_MOM),
     position_sizer=ATRPositionSizer(PARAMS_S21_LONG_MOM),
 )
 
@@ -153,7 +153,7 @@ PARAMS_S22_SHORT_RSI_THRUST = dict(
 )
 
 SE_S22_SHORT_RSI_THRUST = StrategyExecutor(
-    strategy=S22ShortRSIThrust(PARAMS_S22_SHORT_RSI_THRUST),
+    strategy=S22ShortRSIThrust('s22', PARAMS_S22_SHORT_RSI_THRUST),
     position_sizer=ATRPositionSizer(PARAMS_S22_SHORT_RSI_THRUST),
 )
 
@@ -179,7 +179,7 @@ PARAMS_S23_LONG_MR = dict(
 )
 
 SE_S23_LONG_MR = StrategyExecutor(
-    strategy=S23LongMR(PARAMS_S23_LONG_MR),
+    strategy=S23LongMR('s23', PARAMS_S23_LONG_MR),
     position_sizer=ATRPositionSizer(PARAMS_S23_LONG_MR),
 )
 
@@ -205,7 +205,7 @@ PARAMS_S24_LOW_VOL_LONG = dict(
 )
 
 SE_S24_LOW_VOL_LONG = StrategyExecutor(
-    strategy=S24LowVolLong(PARAMS_S24_LOW_VOL_LONG),
+    strategy=S24LowVolLong('s24', PARAMS_S24_LOW_VOL_LONG),
     position_sizer=ATRPositionSizer(PARAMS_S24_LOW_VOL_LONG),
 )
 
@@ -234,7 +234,7 @@ PARAMS_S25_ADX_LONG_MR = dict(
     price_target_atr_multiple=1,
 )
 SE_S25_ADX_MR_LONG = StrategyExecutor(
-    strategy=S25ADXLongMR(PARAMS_S25_ADX_LONG_MR),
+    strategy=S25ADXLongMR('s26', PARAMS_S25_ADX_LONG_MR),
     position_sizer=ATRPositionSizer(PARAMS_S25_ADX_LONG_MR)
 )
 
@@ -259,7 +259,7 @@ PARAMS_S26_6DAY_SURGE_SHORT = dict(
 )
 
 SE_S26_6DAY_SURGE_SHORT = StrategyExecutor(
-    strategy=S26SixDaySurgeShort(PARAMS_S26_6DAY_SURGE_SHORT),
+    strategy=S26SixDaySurgeShort('s26', PARAMS_S26_6DAY_SURGE_SHORT),
     position_sizer=ATRPositionSizer(PARAMS_S26_6DAY_SURGE_SHORT),
 )
 

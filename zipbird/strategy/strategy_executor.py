@@ -1,5 +1,6 @@
 import pandas as pd
 
+from zipbird.replay.order_container import OrderContainer
 from zipbird.utils.logger_util import DebugLogger
 from zipbird.basic.order import Order, ShareOrder
 from zipbird.basic.signal import Signal
@@ -17,10 +18,11 @@ class StrategyExecutor:
         self.strategy = strategy
         self.position_sizer = position_sizer
         self.pipeline_maker = PipelineMaker()
-
+        self.replay_order_container = OrderContainer(self.strategy.get_name())
+        
     def init(self, debug_logger:DebugLogger):
-        self.debug_logger = debug_logger
-        self.position_manager = PositionManager(self.debug_logger)
+        self.debug_logger = debug_logger        
+        self.position_manager = PositionManager(self.debug_logger, self.replay_order_container)
 
     def get_order_fill_callback(self):
         return self.position_manager.on_order_filled

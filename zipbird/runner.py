@@ -45,12 +45,9 @@ def run():
     parser.add_argument('-b', '--bundle', default='quandl')
     parser.add_argument('-f', '--frequency', default='d')
     parser.add_argument('-l', '--label', default='')
-
+    
     args = parser.parse_args()
-    if args.strategy_name not in se_models.STRATEGY_FUNC_MAP:
-        print('Strategy name {} unknown, choose from: {}'.format(
-            args.strategy_name, se_models.STRATEGY_FUNC_MAP.keys()))
-        return
+
     
     strategy = se_models.STRATEGY_FUNC_MAP[args.strategy_name]
     start_time = pd.Timestamp(args.start)
@@ -64,7 +61,10 @@ def run():
     action = args.action
     if action == 'run':
         #round_trip_tracker = position_manager.RoundTripTracker()
-
+        if args.strategy_name not in se_models.STRATEGY_FUNC_MAP:
+            print('Strategy name {} unknown, choose from: {}'.format(
+                args.strategy_name, se_models.STRATEGY_FUNC_MAP.keys()))
+            return
         perf = run_internal(
             start_time=start_time,
             end_time=end_time,
@@ -80,6 +80,15 @@ def run():
             perf,            
             strategy,
             args.label)
+        
+        utils.dump_replay_orders(
+            args.strategy_name,
+            start_time,
+            end_time,
+            strategy,
+            args.label
+        )
+
     elif action == 'verify':
         verify_strategy_result(
             prefix=args.strategy_name,

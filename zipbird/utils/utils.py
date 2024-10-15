@@ -15,9 +15,12 @@ def print_stats(context, perf):
     print('Annualized Return: {:.2%}, Max Drawdown: {:.2%}'.format(ann_ret, maxdd))
 
 
-def pickle_filename(prefix:str, start_date:pd.Timestamp, end_date:pd.Timestamp, label:str=''):
-    return'results/{}-{:%y-%m-%d}-to-{:%y-%m-%d}-{}.pickle'.format(
+def filename(prefix:str, start_date:pd.Timestamp, end_date:pd.Timestamp, label:str=''):
+    return '{}-{:%y-%m-%d}-to-{:%y-%m-%d}-{}'.format(
         prefix, start_date, end_date, label)
+
+def pickle_filename(prefix:str, start_date:pd.Timestamp, end_date:pd.Timestamp, label:str=''):
+    return f'results/{filename(prefix, start_date, end_date, label)}.pickle'
 
 def dump_pickle(
         prefix:str,
@@ -36,3 +39,16 @@ def dump_pickle(
                  #'round_trip_tracker': round_trip_tracker
             },
             file)
+
+def replay_filename(prefix:str, start_date:pd.Timestamp, end_date:pd.Timestamp, label:str=''):
+    return f'results/replay-{filename(prefix, start_date, end_date, label)}.csv'
+
+def dump_replay_orders(
+        prefix:str,
+        start_date:pd.Timestamp,
+        end_date:pd.Timestamp,
+        strategy,
+        label=''):
+    """Dump a csv file that contains replay orders"""
+    filename = replay_filename(prefix, start_date, end_date, label)
+    strategy.replay_order_container.write_orders(filename)
