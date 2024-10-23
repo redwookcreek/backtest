@@ -52,3 +52,9 @@ def dump_replay_orders(
     """Dump a csv file that contains replay orders"""
     filename = replay_filename(prefix, start_date, end_date, label)
     strategy.replay_order_container.write_orders(filename)
+
+def compare_object(o1, o2):
+    return (
+        o1 is None and o2 is None
+        or
+        o1 == o2)

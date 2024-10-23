@@ -10,10 +10,6 @@ from zipbird.basic.types import Equity, Portfolio
 from zipbird.position_manager.position_sizer import PositionSizer
 class RotationPositionSizer(PositionSizer):
 
-    def __init__(self, params):
-        self.params = params
-
-
     def _get_weights(self, 
                      pipeline_output:pd.DataFrame,
                      kept_positions: list[Equity], 

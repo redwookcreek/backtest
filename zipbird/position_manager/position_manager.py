@@ -7,7 +7,7 @@ import pandas as pd
 from zipline import api as zipline_api
 from zipline.finance import execution as zipline_execution
 
-from zipbird.replay.order_container import OrderContainer
+from zipbird.replay.order_collector import OrderCollector
 
 class DuplicatePendingOrderError(Exception):
     pass
@@ -74,7 +74,7 @@ class PositionManager:
     pending_orders: dict[Equity, PendingOrder]
     managed_orders: dict[Equity, Order]
 
-    def __init__(self, debug_logger, replay_container:OrderContainer):
+    def __init__(self, debug_logger, replay_container:OrderCollector):
         # Pending orders are orders entered in last session
         # Pending order may be filled during last session, in that case
         # it will be moved to managed orders.
@@ -115,12 +115,18 @@ class PositionManager:
                 f'Mismatched zipline order id: {pending_order} != {order}'
             self.debug_logger.debug_print(
                 5, 
-                'Pending order filled %s %d' % (asset, amount))
+                'Pending order filled %s %d' % (asset, amount))            
             if pending_order.order.open_close == OpenClose.Close:
                 self.managed_orders.pop(asset)
-                self.replay_container.add_close_order(pending_order.order, today, price)
+                # add order for replay
+                self.replay_container.add_close_order(
+                    order=pending_order.order,
+                    close_date=today,
+                    close_price=price)
             else:
+                
                 self.managed_orders[asset] = pending_order.order
+                # add order for replay
                 self.replay_container.add_open_order(
                     open_date=today,
                     open_price=price,

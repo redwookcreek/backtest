@@ -10,6 +10,15 @@ from zipbird.basic.order import Order
 
 class PositionSizer:
 
+    def __init__(self, params):
+        self.params = params
+
+    def get_max_equity_per_position(self):
+        return self.params['max_equity_per_position']
+    
+    def get_max_fraction_risk(self):
+        return self.params['fraction_risk']
+
     def get_orders(
             self,
             portfolio: Portfolio,

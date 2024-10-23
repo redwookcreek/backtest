@@ -9,8 +9,6 @@ from zipbird.strategy import pipeline_column_names as colume_names
 from zipbird.position_manager.position_sizer import PositionSizer
 
 class ATRPositionSizer(PositionSizer):
-    def __init__(self, params):
-        self.params = params
     
     def get_orders(self,
                    portfolio: Portfolio,
@@ -56,8 +54,8 @@ class ATRPositionSizer(PositionSizer):
         price = pipeline_data['close'][stock]
         risk = self._get_stop_loss_diff(stock, pipeline_data)
         return min(
-            int(portfolio_value * self.params['fraction_risk'] / risk),
-            int(portfolio_value * self.params['max_equity_per_position'] / price))
+            int(portfolio_value * self.get_max_fraction_risk() / risk),
+            int(portfolio_value * self.get_max_equity_per_position() / price))
     
     def _get_profit_target(self, signal, pipeline_data:pd.DataFrame):
         
