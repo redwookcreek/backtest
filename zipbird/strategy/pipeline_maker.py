@@ -110,6 +110,9 @@ class PipelineMaker:
                 (unadjusted_close > min_close) & 
                 (dollar_volume_rank <= max_rank)
         )
+        self.add_universe(universe_screen)
+
+    def add_universe(self, universe_screen):
         self.universe = universe_screen
 
     FILTER_NAME = 'universe'

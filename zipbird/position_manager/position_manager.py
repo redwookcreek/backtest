@@ -198,7 +198,13 @@ class PositionManager:
 
     def send_orders(self, orders:list[Order]):
         for order in orders:
-            self._make_and_send_pending_order(order, is_stop_order=False)
+            if order.open_close == OpenClose.Close:
+                # copy over managed order's uuid
+                managed_order = self.managed_orders[order.stock]
+                order.uuid = managed_order.uuid
+                self._make_and_send_pending_order(order, is_stop_order=False)
+            else:
+                self._make_and_send_pending_order(order, is_stop_order=False)
 
     def _cancel_pending_orders(self, today:datetime.date, positions:Positions):
         all_open_orders = sum(self.order_api.get_open_orders().values(), [])
@@ -240,7 +246,6 @@ class PositionManager:
             if not managed_order.stop:
                 continue
             stop_order_status = managed_order.stop.get_status(data.loc[asset])
-            pending_order = None
             if stop_order_status in (StopOrderStatus.INITIAL_STOP, 
                                      StopOrderStatus.TRAILING_STOP):
                 self.debug_logger.debug_print(

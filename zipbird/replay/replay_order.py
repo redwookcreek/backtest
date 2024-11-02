@@ -89,7 +89,7 @@ class ReplayOrder:
             utils.compare_object(self.close_price, value.close_price)
             )
     def __str__(self)-> str:
-        return f'ReplayOrder({self.symbol},{self.long_short},{self.open_date},{self.open_price},{self.close_date},{self.close_price})'
+        return f'ReplayOrder({self.symbol},{self.long_short},{self.open_date},{self.open_price},{self.close_date},{self.close_price},{self.replay_shares})'
 
 def to_date(date_str: str) -> date:
     if not date_str:

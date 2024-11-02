@@ -33,8 +33,7 @@ class S1WeeklyRotationStrategy(BaseStrategy):
                 (unadjusted_close > self.params['min_price']) & 
                 (dollar_volume_rank < 1000)
             )
-        pipeline_maker.add_filter(
-            filter=universe_screen)
+        pipeline_maker.add_universe(universe_screen)
 
         pipeline_maker.add_roc(self.params['roc_len'])
         pipeline_maker.add_rsi(self.params['rsi_len'])
@@ -79,18 +78,19 @@ class S1WeeklyRotationStrategy(BaseStrategy):
         n_of_new_positions = self.params['n_of_positions'] - len(to_keep)
         
         to_open = roc.loc[(~roc.index.isin(to_keep)) & roc.index.isin(rsi.index)]
+        #to_open = roc.loc[(~roc.index.isin(to_keep))]
         to_open = to_open[:n_of_new_positions].index.tolist()
 
         to_open, to_close, to_keep = remove_duplicates_and_make_signals(to_open, to_close, to_keep)
 
         if self.params['rebalance_by_vol']:
             # If rebalance by vol, adjust all positions
-            to_adjust = [Signal.make_open_long(s, 0, True) for s in to_keep]
+            to_adjust = [Signal.make_adjust_long(s) for s in to_keep]
         else:
             # otherwise, do not touch existing positions (unless 
             # for closing)
             to_adjust = []
-        return to_close + to_open + to_adjust
+        return to_open + to_adjust + to_close
     
 
 def remove_duplicates_and_make_signals(to_open, to_close, to_keep):

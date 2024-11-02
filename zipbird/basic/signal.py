@@ -33,6 +33,10 @@ class Signal:
         return Signal(stock, OpenClose.Open, LongShort.Long, limit_price)
     
     @staticmethod
+    def make_adjust_long(stock):
+        return Signal(stock, OpenClose.Adjust, LongShort.Long)
+    
+    @staticmethod
     def make_close_short(stock):
         return Signal(stock, OpenClose.Close, LongShort.Short)
 

@@ -14,7 +14,7 @@ class OrderCollector:
     def add_open_order(self,
                        open_date: date,
                        open_price: float,
-                       open_order: Order):        
+                       open_order: Order):
         self.orders[open_order.uuid] = ReplayOrder.make_from_open_order(
             strategy_name=self.strategy_name,
             open_date=open_date,

@@ -100,8 +100,6 @@ class ReplayStrategy:
                         "Order must have either open_sizer_percent or open_sizer_stop_diff")
                 self.send_open_order(order)
             elif order.close_date == trade_day:
-                if order.replay_shares == 0:
-                    raise InvalidReplayShare("Must be non zero shares to close an order")
                 self.send_close_order(order)
             else:
                 raise InvalidTradeDayOrder("Order date must match trade day")
@@ -128,6 +126,9 @@ class ReplayStrategy:
         return min(shares_by_percent, shares_by_risk)
 
     def send_open_order(self, order:ReplayOrder):
+        if order.replay_shares == 0:
+            self.debug_logger.debug_print(0, f'Warning: zeor replay shares, order ignored: {order}')
+            return
         sign = 1 if order.long_short == LongShort.Long else -1
         zipline_id = self.zipline_api.order(
             order.asset,
@@ -137,6 +138,9 @@ class ReplayStrategy:
         self.debug_logger.debug_print(6, f'sending out open {zipline_id}: {order}')
 
     def send_close_order(self, order:ReplayOrder):
+        if order.replay_shares == 0:
+            self.debug_logger.debug_print(0, f'Warning: zeor replay shares, order ignored: {order}')
+            return
         sign = -1 if order.long_short == LongShort.Long else 1
         zipline_id = self.zipline_api.order(
             order.asset,

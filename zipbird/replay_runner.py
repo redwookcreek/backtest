@@ -77,7 +77,7 @@ def run():
         strategies,
         strategy_weights,
     )
-    add_past_orders(replayer, strategy_names, start_time, end_time, args.label)
+    add_past_orders(replayer, strategy_names, start_time, end_time, '') #, args.label)
     perf = run_internal(start_time,
                  end_time,
                  replayer,
