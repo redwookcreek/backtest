@@ -13,27 +13,9 @@ from zipbird.replay.replay_order import ReplayOrder
 from zipbird.replay.replay_strategy import ReplayStrategy
 import zipbird.strategies.models as se_models
 from zipbird.utils import logger_util, utils
+from zipbird.runner_util import supress_warnings, timing
 
-import warnings
-
-warnings.simplefilter(action='ignore', category=FutureWarning, append=True)
-# supress empyrical warnings "invalid value encountered in divide"
-warnings.simplefilter(action='ignore', category=RuntimeWarning, lineno=710, append=True)
-warnings.simplefilter(action='ignore', category=RuntimeWarning, lineno=799, append=True)
-
-
-
-def timing(f):
-    @wraps(f)
-    def wrap(*args, **kw):
-        start = time.perf_counter()
-        result = f(*args, **kw)
-        seconds = time.perf_counter() - start
-        minutes = seconds / 60
-        print('func:%r took: %.2f minutes' % \
-          (f.__name__, minutes))
-        return result
-    return wrap
+supress_warnings()
 
 def run():
     parser = argparse.ArgumentParser(
@@ -146,6 +128,12 @@ def before_trading_start_zipline(replayer:ReplayStrategy,
                                  context:zipline.TradingAlgorithm,
                                  data):
     today = zipline_api.get_datetime().date()
+
+    # Print positions
+    debug_logger = replayer.debug_logger
+    debug_logger.debug_print(2, f'--------- Positions at {today} -----')
+    debug_logger.debug_print(2, ','.join(f'{stock.symbol}:{pos.amount}'
+                                         for stock, pos in context.portfolio.positions.items()))
     portfolio_value = context.portfolio.portfolio_value
     pipeline_data = zipline_api.pipeline_output(_PIPELINE_NAME)
     replayer.verify_all_orders_filled()

@@ -1,8 +1,8 @@
-
+from datetime import date
 import pandas as pd
 import numpy as np
 import pickle
-
+import math
 
 def print_stats(context, perf):
     perf['max'] = perf.portfolio_value.cummax()
@@ -58,3 +58,6 @@ def compare_object(o1, o2):
         o1 is None and o2 is None
         or
         o1 == o2)
+
+def get_quarter(d: date):
+    return math.ceil(d.month / 3)

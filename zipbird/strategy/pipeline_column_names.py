@@ -34,3 +34,15 @@ def roc_name(period):
 
 def consecutive_up_name(period):
     return f'{period}_up'
+
+def max_in_window(period):
+    return f'{period}_high'
+
+def sma_cross(period):
+    return f'sma_cross_{period}'
+
+def sma_trend(period):
+    return f'sma_trend_{period}'
+
+def dollar_volume_rank(period):
+    return f'dv_rank_{period}'

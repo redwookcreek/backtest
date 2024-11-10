@@ -3,7 +3,7 @@ import pandas as pd
 from zipbird.strategy.pipeline_maker import PipelineMaker
 from zipbird.strategy import pipeline_column_names
 from zipbird.strategy.strategy import BaseStrategy, Signal
-from zipbird.utils import factor_utils
+from zipbird.utils import factor_utils, utils
 
 import zipline
 from zipline.protocol import Positions
@@ -14,6 +14,10 @@ SPX_TICKER = '$SPX'
 
 class S1WeeklyRotationStrategy(BaseStrategy):
     
+    def __init__(self, strategy_name, params):
+        super().__init__(strategy_name, params)
+        self.last_balance_day = None
+
     def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
         """Create zipline pipeline"""
         unadjusted_close = NorgateDataUnadjustedClose()
@@ -57,9 +61,18 @@ class S1WeeklyRotationStrategy(BaseStrategy):
         RSI = pipeline_column_names.rsi_name(self.params['rsi_len'])
     
         today = zipline.api.get_datetime().date()
-        if today.weekday() != 0:
-            # not Monday, do nothing
-            return []
+        if self.params['balance_freq'] == 'weekly':
+            if today.weekday() != 0:
+                # not Monday, do nothing
+                return []
+        elif self.params['balance_freq'] == 'monthly':
+            if self.last_balance_day is not None and self.last_balance_day.month == today.month:
+                # balance at begining of month
+                return []
+        elif self.params['balance_freq'] == 'quarterly':
+            if self.last_balance_day is not None and utils.get_quarter(today) == utils.get_quarter(self.last_balance_day):
+                return []
+        self.last_balance_day = today
         # If market is in down trend (spx < 200MA), close all positions
         SPX = zipline.api.symbol(SPX_TICKER)
         spx_close = pipeline_data['close'][SPX]

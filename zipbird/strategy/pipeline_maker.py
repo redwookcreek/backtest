@@ -41,59 +41,56 @@ class PipelineMaker:
             name=col_name.rsi_name(period),
             factor=factor_utils.RSIFactor(
                     rsi_len=period,
-                    window_length=period + EXTRA_LENGTH,
-                    mask=self.universe))
+                    window_length=period + EXTRA_LENGTH))
     
     def add_sma(self, period):
         return self._maybe_add_column(
             name=col_name.sma_name(period),
             factor= basic_factors.SimpleMovingAverage(
                 inputs=[USEquityPricing.close],
-                window_length=period,
-                mask=self.universe))
+                window_length=period))
     
     def add_atr(self, period):
         return self._maybe_add_column(
             name=col_name.atr_name(period),
             factor=factor_utils.ATRFactor(
                 atr_len=period,
-                window_length=period + EXTRA_LENGTH,
-                mask=self.universe))
+                window_length=period + EXTRA_LENGTH))
     
     def add_atrp(self, period):
         return self._maybe_add_column(
             name=col_name.atrp_name(period),
             factor=factor_utils.ATRPFactor(
                 atr_len=period,
-                window_length=period + EXTRA_LENGTH,
-                mask=self.universe))
+                window_length=period + EXTRA_LENGTH))
     
     def add_adx(self, period):
         return self._maybe_add_column(
             name=col_name.adx_name(period),
             factor=factor_utils.ADXFactor(
                 adx_len=period,
-                window_length=period + EXTRA_LENGTH,
-                mask=self.universe))
+                window_length=period + EXTRA_LENGTH))
     
     def add_vol(self, period):
         return self._maybe_add_column(
             name=col_name.vol_name(period),
-            factor=factor_utils.StdFactorPercent(window_length=period,
-                                                 mask=self.universe))
+            factor=factor_utils.StdFactorPercent(window_length=period))
+    
+    def add_max_in_window(self, period):
+        return self._maybe_add_column(
+            name=col_name.max_in_window(period),
+            factor=factor_utils.MaxInWindowFactor(window_length=period))
     
     def add_vol_percentile(self, period):
         return self._maybe_add_column(
             name=col_name.vol_percentile_name(period),
-            factor=factor_utils.StdPercentileFactor(window_length=period,
-                                                        mask=self.universe))
+            factor=factor_utils.StdPercentileFactor(window_length=period))
 
     def add_roc(self, period):
         return self._maybe_add_column(
             name=col_name.roc_name(period),
             factor=factor_utils.ROCFactor(window_length=period + EXTRA_LENGTH,
-                                          roc_len=period,
-                                          mask=self.universe))
+                                          roc_len=period))
     
     def add_consecutive_up(self, period):
         return self._maybe_add_column(
@@ -101,6 +98,12 @@ class PipelineMaker:
             factor=factor_utils.ConsecutiveUpFactor(window_length=period)
         )
 
+    def add_dollar_volume_rank(self, period):
+        self._maybe_add_column(
+            name=col_name.dollar_volume_rank(period),
+            filter=factor_utils.DollarVolumeRankFactor(window_length=period)
+        )
+        
     def add_dollar_volume_rank_universe(self, max_rank:int, min_close:float, window_length:int):
         unadjusted_close = NorgateDataUnadjustedClose()
         dollar_volume_rank = factor_utils.DollarVolumeRankFactor(
@@ -127,3 +130,18 @@ class PipelineMaker:
         for filter_name in self.filters:
             to_return = to_return[to_return[filter_name]]
         return to_return
+
+    def add_sma_cross(self, period):
+        return self._maybe_add_column(
+            name=col_name.sma_cross(period),
+            factor=factor_utils.SMACrossOver(
+                sma_len=period, window_length=period+10),
+            mask=self.universe
+        )
+    
+    def add_sma_trend(self, period):
+        return self._maybe_add_column(
+            name=col_name.sma_trend(period),
+            factor=factor_utils.SMATrend(sma_len=period, window_length=period+10),
+            mask=self.universe
+        )

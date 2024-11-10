@@ -159,3 +159,55 @@ class TickerFilter(CustomFilter):
         sids = [symbol(t).sid for t in tickers]
         out[:] = np.isin(assets, sids)
 
+
+class SMACrossOver(CustomFactor):
+    """SMA cross over
+    -1 for cross from above to below
+    1  for cross from below to above
+    0 for no cross event
+    """
+    inputs = [USEquityPricing.close]
+    params = ('sma_len', )
+
+    def compute(self, today, assets, out, close, sma_len):
+        
+        # Get SMA for current day and previous day
+        sma_today = np.mean(close[-sma_len:], axis=0)
+        sma_yesterday = np.mean(close[-(sma_len+1):-1], axis=0)
+        
+        # Get price for current day and previous day
+        price_today = close[-1]
+        price_yesterday = close[-2]
+        
+        # Check crossover conditions
+        cross_above = (price_yesterday <= sma_yesterday) & (price_today > sma_today)
+        cross_below = (price_yesterday >= sma_yesterday) & (price_today < sma_today)
+        
+        # Set output
+        out[:] = 0  # Default no crossover
+        out[cross_above] = 1  # Crossed above
+        out[cross_below] = -1  # Crossed below
+
+class SMATrend(CustomFactor):
+    """
+    1 if SMA is trending up (today > yesterday)
+    -1 if SMA is trending down
+    0 if no change
+    """
+    inputs = [USEquityPricing.close]
+    params = ('sma_len', )
+
+    def compute(self, today, assets, out, close, sma_len):
+       
+       # Get SMA for current day and previous day 
+       sma_today = np.mean(close[-sma_len:], axis=0)
+       sma_yesterday = np.mean(close[-(sma_len+1):-1], axis=0)
+       
+       # Check trend conditions
+       trending_up = sma_today > sma_yesterday
+       trending_down = sma_today < sma_yesterday
+       
+       # Set output
+       out[:] = 0  # Default no change
+       out[trending_up] = 1  # Trending up
+       out[trending_down] = -1  # Trending down

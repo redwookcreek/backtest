@@ -9,27 +9,9 @@ import pickle
 import zipbird.strategies.models as se_models
 from zipbird.strategy.strategy_zipline_funcs import initialize_zipline, before_trading_start_zipline
 from zipbird.utils import logger_util, utils
+from zipbird.runner_util import supress_warnings, timing
 
-import warnings
-
-warnings.simplefilter(action='ignore', category=FutureWarning, append=True)
-# supress empyrical warnings "invalid value encountered in divide"
-warnings.simplefilter(action='ignore', category=RuntimeWarning, lineno=710, append=True)
-warnings.simplefilter(action='ignore', category=RuntimeWarning, lineno=799, append=True)
-
-
-
-def timing(f):
-    @wraps(f)
-    def wrap(*args, **kw):
-        start = time.perf_counter()
-        result = f(*args, **kw)
-        seconds = time.perf_counter() - start
-        minutes = seconds / 60
-        print('func:%r took: %.2f minutes' % \
-          (f.__name__, minutes))
-        return result
-    return wrap
+supress_warnings()
 
 def run():
     parser = argparse.ArgumentParser(
