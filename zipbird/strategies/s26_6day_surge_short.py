@@ -9,24 +9,28 @@ from zipline.protocol import Positions
 
 
 class S26SixDaySurgeShort(BaseStrategy):
-    
-    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
-        """Create zipline pipeline"""
 
+    def make_pipeline(self, pipeline_maker:PipelineMaker):
+        filter = self.prepare_pipeline_columns(pipeline_maker)
         pipeline_maker.add_dollar_volume_rank_universe(
             min_close=self.params['min_price'],
             max_rank=self.params['dollar_volume_rank_max'],
             window_length=self.params['dollar_volume_rank_window'],
         )
+        pipeline_maker.add_filter(
+            filter=filter,
+            filter_name='mr_filter',
+        )
+        
+    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
+        """Create zipline pipeline"""
         roc = pipeline_maker.add_roc(self.params['roc_period'])
         pipeline_maker.add_atr(self.params['atr_period'])
         consecutive_up = pipeline_maker.add_consecutive_up(self.params['days_up'])
-        pipeline_maker.add_filter(
-            filter=(
-                (roc >= self.params['last_6day_min_up'] ) &
-                (consecutive_up >= 1)
-            ),
-            filter_name='mr_filter',
+
+        return (
+            (roc >= self.params['last_6day_min_up'] ) &
+            (consecutive_up >= 1)
         )
 
     def generate_signals(self,

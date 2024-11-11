@@ -12,24 +12,29 @@ from zipline.pipeline.data import USEquityPricing
 SPX_TICKER = '$SPX'
 
 class S21LongMOM(BaseStrategy):
-    
-    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
-        """Create zipline pipeline"""
+
+    def make_pipeline(self, pipeline_maker:PipelineMaker):
+        filter = self.prepare_pipeline_columns(pipeline_maker)
 
         pipeline_maker.add_dollar_volume_rank_universe(
             min_close=self.params['min_price'],
             max_rank=self.params['dollar_volume_rank_max'],
             window_length=self.params['dollar_volume_rank_window'],
         )
+        pipeline_maker.add_filter(
+            filter=filter,
+            filter_name='mom_filter',
+        )
+
+    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
+        """Create zipline pipeline"""
+
         pipeline_maker.add_sma(self.params['spx_sma_period'])
         fast_sma = pipeline_maker.add_sma(self.params['fast_sma_period'])
         slow_sma = pipeline_maker.add_sma(self.params['slow_sma_period'])
         pipeline_maker.add_roc(self.params['roc_period'])
         pipeline_maker.add_atr(self.params['atr_period'])
-        pipeline_maker.add_filter(
-            filter=(fast_sma > slow_sma),
-            filter_name='mom_filter',
-        )
+        return (fast_sma > slow_sma)
 
     def generate_signals(self,
                          positions:Positions,

@@ -10,30 +10,34 @@ from zipline.pipeline.data import USEquityPricing
 
 
 class S25ADXLongMR(BaseStrategy):
-    
-    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
-        """Create zipline pipeline"""
-        yesterday_close = USEquityPricing.close.latest
 
+    def make_pipeline(self, pipeline_maker:PipelineMaker):
+        filter = self.prepare_pipeline_columns(pipeline_maker)
         pipeline_maker.add_dollar_volume_rank_universe(
             min_close=self.params['min_price'],
             max_rank=self.params['dollar_volume_rank_max'],
             window_length=self.params['dollar_volume_rank_window'],
         )
+        pipeline_maker.add_filter(
+            filter=filter,
+            filter_name='mr_filter',
+        )
+        
+    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
+        """Create zipline pipeline"""
+        yesterday_close = USEquityPricing.close.latest
+
         atrp = pipeline_maker.add_atrp(self.params['atr_period'])
         sma = pipeline_maker.add_sma(self.params['sma_period'])
         adx = pipeline_maker.add_adx(self.params['adx_period'])
         rsi = pipeline_maker.add_rsi(self.params['rsi_period'])
         atr = pipeline_maker.add_atr(self.params['atr_period'])
 
-        pipeline_maker.add_filter(
-            filter=(
-                (yesterday_close > (sma + atr)) & 
-                (atrp > self.params['atr_percent_limit']) &
-                (adx > self.params['adx_lower_limit']) &
-                (rsi < self.params['rsi_upper_limit'])
-            ),
-            filter_name='mr_filter',
+        return (
+            (yesterday_close > (sma + atr)) & 
+            (atrp > self.params['atr_percent_limit']) &
+            (adx > self.params['adx_lower_limit']) &
+            (rsi < self.params['rsi_upper_limit'])
         )
 
     def generate_signals(self,

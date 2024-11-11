@@ -24,8 +24,8 @@ SPX_TICKER = '$SPX'
 
 class S32Cross200MA(BaseStrategy):
     
-    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
-        """Create zipline pipeline"""
+    def make_pipeline(self, pipeline_maker:PipelineMaker):
+        filter = self.prepare_pipeline_columns(pipeline_maker)
         # indexconstituent = NorgateDataIndexConstituent('S&P 500')
         # universe_screen = factor_utils.get_universe_screen(
         #         min_price=self.params['min_price'],
@@ -35,16 +35,20 @@ class S32Cross200MA(BaseStrategy):
         # universe_screen = (universe_screen & indexconstituent)
         # pipeline_maker.add_universe(universe_screen=universe_screen)
         pipeline_maker.add_dollar_volume_rank_universe(max_rank=1000, min_close=1, window_length=200)
-
+        pipeline_maker.add_filter(
+            filter=filter,
+            filter_name='200_sma_cross',
+        )
+        
+    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
+        """Create zipline pipeline"""
         pipeline_maker.add_sma(self.params['spx_sma_period'])
         pipeline_maker.add_atr(self.params['atr_period'])
         pipeline_maker.add_roc(self.params['roc_period'])
         sma_cross = pipeline_maker.add_sma_cross(self.params['sma_period'])
         sma_trend = pipeline_maker.add_sma_trend(self.params['sma_period'])
-        pipeline_maker.add_filter(
-            filter=((sma_cross > 0) & (sma_trend > 0)),
-            filter_name='200_sma_cross',
-        )
+
+        return ((sma_cross > 0) & (sma_trend > 0))
 
     def generate_signals(self,
                          positions:Positions,

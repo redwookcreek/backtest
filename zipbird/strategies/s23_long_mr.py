@@ -10,25 +10,29 @@ from zipline.pipeline.data import USEquityPricing
 
 
 class S23LongMR(BaseStrategy):
-    
-    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
-        """Create zipline pipeline"""
-        yesterday_close = USEquityPricing.close.latest
 
+    def make_pipeline(self, pipeline_maker:PipelineMaker):
+        filter = self.prepare_pipeline_columns(pipeline_maker)
         pipeline_maker.add_dollar_volume_rank_universe(
             min_close=self.params['min_price'],
             max_rank=self.params['dollar_volume_rank_max'],
             window_length=self.params['dollar_volume_rank_window'],
         )
+        pipeline_maker.add_filter(
+            filter=filter,
+            filter_name='mr_filter',
+        )
+        
+    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
+        """Create zipline pipeline"""
+        yesterday_close = USEquityPricing.close.latest
+
         sma = pipeline_maker.add_sma(self.params['sma_period'])
         roc = pipeline_maker.add_roc(self.params['roc_period'])
         pipeline_maker.add_atr(self.params['atr_period'])
-        pipeline_maker.add_filter(
-            filter=(
-                (yesterday_close > sma) &
-                (roc < self.params['last_3_day_drop'])
-            ),
-            filter_name='mr_filter',
+        return (
+            (yesterday_close > sma) &
+            (roc < self.params['last_3_day_drop'])
         )
 
     def generate_signals(self,

@@ -1,3 +1,4 @@
+from enum import Enum
 import pandas as pd
 
 from zipline.pipeline import Pipeline
@@ -6,12 +7,15 @@ from zipline.pipeline.filters import Filter
 from zipline.pipeline.data import USEquityPricing
 from zipline.pipeline.factors import basic as basic_factors
 from zipline_norgatedata.pipelines import NorgateDataUnadjustedClose
-
+from zipline_norgatedata.pipelines import NorgateDataIndexConstituent
 
 from zipbird.utils import factor_utils
 from zipbird.strategy import pipeline_column_names as col_name
 
 EXTRA_LENGTH = 100
+
+class IndexNames(Enum):
+    SP500 = 'S&P 500'
 
 class PipelineMaker:
     """Pipeline maker.
@@ -145,3 +149,13 @@ class PipelineMaker:
             factor=factor_utils.SMATrend(sma_len=period, window_length=period+10),
             mask=self.universe
         )
+    
+    def add_index_consititue(self, index_name:IndexNames):
+        match index_name:
+            case IndexNames.SP500:
+                return self._maybe_add_column(
+                    name=index_name.value,
+                    factor=NorgateDataIndexConstituent('S&P 500')
+                )
+        raise ValueError(f'Unhanlded index consititue {index_name}')
+        

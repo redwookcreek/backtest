@@ -10,6 +10,7 @@ from zipline.pipeline.data import USEquityPricing
 import zipbird.strategies.models as se_models
 from zipbird.utils import logger_util, utils
 from zipbird.runner_util import supress_warnings, timing
+from zipbird.pipeline_saver.pipeline_saver import PipelineSaver
 
 supress_warnings()
 
@@ -36,7 +37,7 @@ def run():
         print('To replay, must provide list of strategy_names')
         return
     strategies = [se_models.STRATEGY_FUNC_MAP[name] for name in strategy_names]    
-    pipeline_runner = PipelineRunner(strategies)
+    pipeline_runner = PipelineSaver(strategies)
     run_internal(start_time,
                  end_time,
                  pipeline_runner,
@@ -46,7 +47,7 @@ def run():
 @timing
 def run_internal(start_time:pd.Timestamp,
                  end_time:pd.Timestamp,
-                 pipeline_runner:PipelineRuner,
+                 pipeline_runner:PipelineSaver,
                  capital:float,
                  debug_level:int,
                  bundle:str):
@@ -68,7 +69,7 @@ _PIPELINE_NAME = 'collect_pipeline'
 def make_pipeline():
     return Pipeline(columns={'close': USEquityPricing.close.latest})
 
-def initialize_zipline(pipeline_runner:PipelineRunner, debug_logger:logger_util.DebugLogger, context):
+def initialize_zipline(pipeline_runner:PipelineSaver, debug_logger:logger_util.DebugLogger, context):
     context.pipeline_runner = pipeline_runner
     pipeline_runner.init(debug_logger)
     zipline_api.attach_pipeline(
@@ -78,7 +79,7 @@ def initialize_zipline(pipeline_runner:PipelineRunner, debug_logger:logger_util.
         eager=True
     )
 
-def before_trading_start_zipline(pipeline_runner:PipelineRunner, 
+def before_trading_start_zipline(pipeline_runner:PipelineSaver, 
                                  context:zipline.TradingAlgorithm,
                                  data):
     today = zipline_api.get_datetime().date()

@@ -30,8 +30,8 @@ SPX_TICKER = '$SPX'
 
 class S31Trend50(BaseStrategy):
     
-    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
-        """Create zipline pipeline"""
+    def make_pipeline(self, pipeline_maker:PipelineMaker):
+        filter = self.prepare_pipeline_columns(pipeline_maker)
         #indexconstituent = NorgateDataIndexConstituent('S&P 500')
         # universe_screen = factor_utils.get_universe_screen(
         #         min_price=self.params['min_price'],
@@ -42,7 +42,14 @@ class S31Trend50(BaseStrategy):
         #pipeline_maker.add_universe(universe_screen=universe_screen)
         pipeline_maker.add_dollar_volume_rank_universe(
             max_rank=1000, min_close=1, window_length=200)
-
+        pipeline_maker.add_filter(
+            filter=filter,
+            filter_name='50_high_filter',
+        )
+        
+    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
+        """Create zipline pipeline"""
+        
         yesterday_close = USEquityPricing.close.latest
 
         pipeline_maker.add_sma(self.params['spx_sma_period'])
@@ -50,10 +57,7 @@ class S31Trend50(BaseStrategy):
         pipeline_maker.add_atr(self.params['atr_period'])
         high_in_window = pipeline_maker.add_max_in_window(self.params['roc_period'])
         
-        pipeline_maker.add_filter(
-            filter=(yesterday_close >= high_in_window),
-            filter_name='50_high_filter',
-        )
+        return (yesterday_close >= high_in_window)
 
     def generate_signals(self,
                          positions:Positions,

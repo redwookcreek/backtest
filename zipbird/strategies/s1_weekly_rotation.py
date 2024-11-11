@@ -1,6 +1,6 @@
 import pandas as pd
 
-from zipbird.strategy.pipeline_maker import PipelineMaker
+from zipbird.strategy.pipeline_maker import PipelineMaker, IndexNames
 from zipbird.strategy import pipeline_column_names
 from zipbird.strategy.strategy import BaseStrategy, Signal
 from zipbird.utils import factor_utils, utils
@@ -18,8 +18,8 @@ class S1WeeklyRotationStrategy(BaseStrategy):
         super().__init__(strategy_name, params)
         self.last_balance_day = None
 
-    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
-        """Create zipline pipeline"""
+    def make_pipeline(self, pipeline_maker:PipelineMaker):
+        self.prepare_pipeline_columns(pipeline_maker)
         unadjusted_close = NorgateDataUnadjustedClose()
         indexconstituent = NorgateDataIndexConstituent('S&P 500')
         dollar_volume_rank = factor_utils.DollarVolumeRankFactor(
@@ -39,6 +39,9 @@ class S1WeeklyRotationStrategy(BaseStrategy):
             )
         pipeline_maker.add_universe(universe_screen)
 
+    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
+        """Create zipline pipeline columns"""
+        pipeline_maker.add_index_consititue(IndexNames.SP500)
         pipeline_maker.add_roc(self.params['roc_len'])
         pipeline_maker.add_rsi(self.params['rsi_len'])
         pipeline_maker.add_sma(self.params['market_filter_sma_period'])

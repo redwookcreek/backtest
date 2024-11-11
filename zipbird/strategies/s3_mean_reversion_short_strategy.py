@@ -10,31 +10,36 @@ from zipline.pipeline.data import USEquityPricing
 
 
 class S3MRShort(BaseStrategy):
-    
-    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
-        """Create zipline pipeline"""
-        yesterday_close = USEquityPricing.close.latest
+    def make_pipeline(self, pipeline_maker:PipelineMaker):
+        filter = self.prepare_pipeline_columns(pipeline_maker)
 
         pipeline_maker.add_dollar_volume_rank_universe(
             min_close=self.params['min_price'],
             max_rank=self.params['dollar_volume_rank_max'],
             window_length=self.params['dollar_volume_rank_window'],
+        )    
+        pipeline_maker.add_filter(
+            filter=filter,
+            filter_name='mr_filter',
         )
+
+    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
+        """Create zipline pipeline"""
+        yesterday_close = USEquityPricing.close.latest
+
         rsi = pipeline_maker.add_rsi(self.params['rsi_period'])
         atr = pipeline_maker.add_atr(self.params['atr_period'])
         adx = pipeline_maker.add_adx(self.params['adx_period'])
         atrp = pipeline_maker.add_atrp(self.params['atr_period'])
         consecutive_up = pipeline_maker.add_consecutive_up(self.params['days_up'])
-        pipeline_maker.add_filter(
-            filter=(
-                (rsi >= self.params['rsi_lower_limit']) &
-                (rsi <= self.params['rsi_upper_limit']) &
-                (atrp >= self.params['atr_percent_limit']) &
-                (adx >= self.params['adx_lower_limit']) &
-                (adx <= self.params['adx_upper_limit']) &
-                (consecutive_up >= 1)
-            ),
-            filter_name='mr_filter',
+        
+        return (
+            (rsi >= self.params['rsi_lower_limit']) &
+            (rsi <= self.params['rsi_upper_limit']) &
+            (atrp >= self.params['atr_percent_limit']) &
+            (adx >= self.params['adx_lower_limit']) &
+            (adx <= self.params['adx_upper_limit']) &
+            (consecutive_up >= 1)
         )
 
     def generate_signals(self,
