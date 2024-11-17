@@ -1,5 +1,6 @@
 from zipbird.position_manager.rotation_position_sizer import RotationPositionSizer
 from zipbird.position_manager.atr_position_sizer import ATRPositionSizer
+from zipbird.strategy.indicator_loader import IndicatorLoader
 from zipbird.strategy.strategy_executor import StrategyExecutor
 
 from zipbird.strategies.s1_weekly_rotation import S1WeeklyRotationStrategy
@@ -342,4 +343,5 @@ STRATEGY_FUNC_MAP = {
     's26_6day_surge_short': SE_S26_6DAY_SURGE_SHORT,
     's31_trend_50': SE_S31_TREND_50,
     's32_200_cross': SE_S32_200_CROSS,
+    'ind_loader': IndicatorLoader()
 }

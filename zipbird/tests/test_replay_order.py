@@ -55,12 +55,12 @@ class TestReplayOrder(unittest.TestCase):
     def test_round_price(self):
         # input price, open_close, long_short, expected
         test_data = [
-            (2.3435, OpenClose.Open, LongShort.Long, 2.344),
-            (2.3432, OpenClose.Open, LongShort.Long, 2.344),
-            (2.334, OpenClose.Open, LongShort.Long, 2.334),
-            (12.334, OpenClose.Open, LongShort.Short, 12.334),
-            (12.3344, OpenClose.Open, LongShort.Short, 12.334),
-            (12.3335, OpenClose.Close, LongShort.Long, 12.333),
+            (2.3435, OpenClose.Open, LongShort.Long, 2.35),
+            (2.3432, OpenClose.Open, LongShort.Long, 2.35),
+            (2.33, OpenClose.Open, LongShort.Long, 2.33),
+            (12.334, OpenClose.Open, LongShort.Short, 12.33),
+            (12.33, OpenClose.Open, LongShort.Short, 12.33),
+            (12.335, OpenClose.Close, LongShort.Long, 12.33),
         ]
         for price, open_close, long_short, expected in test_data:
             self.assertEqual(

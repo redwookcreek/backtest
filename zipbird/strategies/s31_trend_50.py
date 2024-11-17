@@ -16,7 +16,7 @@
 """
 import pandas as pd
 
-from zipbird.strategy.pipeline_maker import PipelineMaker
+from zipbird.strategy.pipeline_maker import PipelineMaker, IndexNames
 from zipbird.strategy.strategy_executor import BaseStrategy, Signal
 from zipbird.strategy import pipeline_column_names as col_name
 from zipbird.utils import factor_utils
@@ -30,23 +30,23 @@ SPX_TICKER = '$SPX'
 
 class S31Trend50(BaseStrategy):
     
-    def make_pipeline(self, pipeline_maker:PipelineMaker):
-        filter = self.prepare_pipeline_columns(pipeline_maker)
-        #indexconstituent = NorgateDataIndexConstituent('S&P 500')
+    def make_pipeline(self, pipeline_maker:PipelineMaker):        
+        # indexconstituent = NorgateDataIndexConstituent('S&P 500')
         # universe_screen = factor_utils.get_universe_screen(
         #         min_price=self.params['min_price'],
         #         volume_window_length=self.params['avg_volume_days'],
         #         min_avg_dollar_volume=self.params['min_avg_dollar_volume']
         #     )
-        #universe_screen = (universe_screen & indexconstituent)        
-        #pipeline_maker.add_universe(universe_screen=universe_screen)
+        # universe_screen = (universe_screen & indexconstituent)        
+        # pipeline_maker.add_universe(universe_screen=universe_screen)
         pipeline_maker.add_dollar_volume_rank_universe(
             max_rank=1000, min_close=1, window_length=200)
+        filter = self.prepare_pipeline_columns(pipeline_maker)
         pipeline_maker.add_filter(
             filter=filter,
             filter_name='50_high_filter',
         )
-        
+
     def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
         """Create zipline pipeline"""
         
@@ -55,9 +55,17 @@ class S31Trend50(BaseStrategy):
         pipeline_maker.add_sma(self.params['spx_sma_period'])
         pipeline_maker.add_roc(self.params['roc_period'])
         pipeline_maker.add_atr(self.params['atr_period'])
+        pipeline_maker.add_index_consititue(IndexNames.SP500)
+        pipeline_maker.add_dollar_volume_rank(period=200)
         high_in_window = pipeline_maker.add_max_in_window(self.params['roc_period'])
         
         return (yesterday_close >= high_in_window)
+    
+    def filter_pipeline_data(self, pipeline_data:pd.DataFrame) -> pd.DataFrame:
+        high = col_name.max_in_window(self.params['roc_period'])
+        dv_rank = col_name.dollar_volume_rank(200)
+        d = pipeline_data
+        return d[(d['close'] >= d[high]) & (d[dv_rank] <= 1000)]
 
     def generate_signals(self,
                          positions:Positions,

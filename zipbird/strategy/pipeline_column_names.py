@@ -46,3 +46,6 @@ def sma_trend(period):
 
 def dollar_volume_rank(period):
     return f'dv_rank_{period}'
+
+def index(index_name):
+    return f'i_{index_name.value}'

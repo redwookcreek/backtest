@@ -36,9 +36,14 @@ class Equity:
     """
     symbol: str
     auto_close_date: datetime.date
+    sid: int
+    _next_sid = 0
+
     def __init__(self, symbol:str, auto_close_date:datetime.date=None):
         self.symbol = symbol
         self.auto_close_date = auto_close_date
+        self.sid = self._next_sid
+        self.__class__._next_sid += 1
     
     def __eq__(self, other):
         if not isinstance(other, Equity):

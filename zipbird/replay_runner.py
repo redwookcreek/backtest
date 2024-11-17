@@ -13,7 +13,7 @@ from zipbird.replay.replay_order import ReplayOrder
 from zipbird.replay.replay_strategy import ReplayStrategy
 import zipbird.strategies.models as se_models
 from zipbird.utils import logger_util, utils
-from zipbird.runner_util import supress_warnings, timing
+from zipbird.utils.runner_util import supress_warnings, timing
 
 supress_warnings()
 

@@ -19,7 +19,7 @@ class StrategyExecutor:
         self.position_sizer = position_sizer
         self.pipeline_maker = PipelineMaker()
         self.replay_order_container = OrderCollector(self.strategy.get_name())
-        
+
     def init(self, debug_logger:DebugLogger):
         self.debug_logger = debug_logger        
         self.position_manager = PositionManager(self.debug_logger, self.replay_order_container)
@@ -32,18 +32,33 @@ class StrategyExecutor:
         for param, p in self.strategy.get_params().items():
             print(f'{param}: {p}')
 
+    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
+        """Prepare pipeline columns
+        
+        This is only used by pipeline saver
+        """
+        self.strategy.prepare_pipeline_columns(pipeline_maker)
+
     def make_pipeline(self):
-        self.strategy.prepare_pipeline_columns(self.pipeline_maker)
+        """Creates pipeline
+        
+        This is used when running strategy with zipline pipeline directly.
+        """
+        self.strategy.make_pipeline(self.pipeline_maker)
         return self.pipeline_maker.make_pipeline()
     
     def run(self,
             portfolio:Portfolio,
-            pipeline_data:pd.DataFrame):
+            pipeline_data:pd.DataFrame,
+            use_pipeline_loader:bool=False):
         self.position_manager.do_maintenance(
             portfolio.today,
             portfolio.positions, pipeline_data)
-
-        filtered_pipeline_data = self.pipeline_maker.get_data_after_filter(pipeline_data)
+        
+        if use_pipeline_loader:
+            filtered_pipeline_data= self.strategy.filter_pipeline_data(pipeline_data)
+        else:
+            filtered_pipeline_data = self.pipeline_maker.get_data_after_filter(pipeline_data)
         # Generate signals
         signals = self.strategy.generate_signals(
             positions=portfolio.positions, 

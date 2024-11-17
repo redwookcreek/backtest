@@ -9,7 +9,7 @@ import pickle
 import zipbird.strategies.models as se_models
 from zipbird.strategy.strategy_zipline_funcs import initialize_zipline, before_trading_start_zipline
 from zipbird.utils import logger_util, utils
-from zipbird.runner_util import supress_warnings, timing
+from zipbird.utils.runner_util import supress_warnings, timing
 
 supress_warnings()
 
@@ -30,6 +30,10 @@ def run():
     
     args = parser.parse_args()
 
+    if args.strategy_name not in se_models.STRATEGY_FUNC_MAP:
+        print('Strategy name {} unknown, choose from: {}'.format(
+            args.strategy_name, se_models.STRATEGY_FUNC_MAP.keys()))
+        return
     
     strategy = se_models.STRATEGY_FUNC_MAP[args.strategy_name]
     start_time = pd.Timestamp(args.start)
@@ -43,10 +47,6 @@ def run():
     action = args.action
     if action == 'run':
         #round_trip_tracker = position_manager.RoundTripTracker()
-        if args.strategy_name not in se_models.STRATEGY_FUNC_MAP:
-            print('Strategy name {} unknown, choose from: {}'.format(
-                args.strategy_name, se_models.STRATEGY_FUNC_MAP.keys()))
-            return
         perf = run_internal(
             start_time=start_time,
             end_time=end_time,

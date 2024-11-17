@@ -19,9 +19,15 @@ class BaseStrategy:
     def get_params(self):
         return self.params
 
-    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker) -> pd.DataFrame:
-        """Create zipline pipeline"""
+    def make_pipeline(self, pipeline_maker:PipelineMaker) -> pd.DataFrame:
+        """Make pipeline"""
 
+    def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker) -> pd.DataFrame:
+        """Create zipline pipeline columns"""
+
+    def filter_pipeline_data(self, pipeline_data:pd.DataFrame) -> pd.DataFrame:
+        """Returns data frame for filtered pipeline_data"""
+        
     def generate_signals(self,
                          positions: Positions,
                          pipeline_data:pd.DataFrame,

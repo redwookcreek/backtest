@@ -37,6 +37,19 @@ class S2MRLong(BaseStrategy):
             (adx <= self.params['adx_upper_limit'])
         )
 
+    def filter_pipeline_data(self, pipeline_data:pd.DataFrame) -> pd.DataFrame:
+        sma = col_name.sma_name(self.params['sma_period'])
+        rsi = col_name.rsi_name(self.params['rsi_period'])
+        adx = col_name.adx_name(self.params['adx_period'])
+        atrp = col_name.atrp_name(self.params['atr_period'])
+        d = pipeline_data
+        return d[(d['close'] > d[sma]) &
+                 (d[rsi] >= self.params['rsi_lower_limit']) &
+                 (d[rsi] <= self.params['rsi_upper_limit']) &
+                 (d[atrp] >= self.params['atr_percent_limit']) &
+                 (d[adx] >= self.params['adx_lower_limit']) &
+                 (d[adx] <= self.params['adx_upper_limit'])]
+    
     def generate_signals(self,
                          positions:Positions,
                          pipeline_data:pd.DataFrame,
