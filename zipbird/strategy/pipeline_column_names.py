@@ -25,7 +25,7 @@ def vol_name(period):
 
 
 def vol_percentile_name(period):
-    return f'vol%tile_{period}'
+    return f'volptile_{period}'
 
 
 def roc_name(period):

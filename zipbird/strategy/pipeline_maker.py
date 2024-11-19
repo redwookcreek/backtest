@@ -15,7 +15,7 @@ from zipbird.strategy import pipeline_column_names as col_name
 EXTRA_LENGTH = 100
 
 class IndexNames(Enum):
-    SP500 = 'S&P 500'
+    SP500 = 'SP500'
 
 class PipelineMaker:
     """Pipeline maker.

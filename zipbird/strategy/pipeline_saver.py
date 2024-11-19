@@ -6,7 +6,7 @@ from zipbird.strategy.strategy import BaseStrategy
 from zipbird.strategy.pipeline_maker import PipelineMaker
 from zipbird.utils import logger_util
 
-UNIVERSE_MAX_RANK = 2000
+UNIVERSE_MAX_RANK = 1000
 UNIVERSE_MIN_PRICE = 1.0
 UNIVERSE_WINDOW_LENGTH = 200
 
@@ -22,8 +22,8 @@ class PipelineSaver:
                  db_conn: sqlite3.Connection,
                  start_fresh=False):
         self.strategies = strategies
-
-        self._init_db(db_conn, start_fresh)
+        self.start_fresh = start_fresh
+        self.db_conn = db_conn
 
         # Init pipeline
         self.pipeline_maker = PipelineMaker()
@@ -37,8 +37,12 @@ class PipelineSaver:
     def init(self, debug_logger:logger_util.DebugLogger, start_day:pd.Timestamp, end_day:pd.Timestamp):
         self.debug_logger = debug_logger
 
+        self._init_db()
+        self._create_meta_data_table()
+
         # make sure existing data is compatiable with requested date range
-        self._check_update_existing_data_compatability(start_day=start_day, end_day=end_day)
+        if not self.start_fresh:
+            self._check_update_existing_data_compatability(start_day=start_day, end_day=end_day)
 
         # if there columns already exists, we don't need to calculate them again
         existing_columns = self._get_existing_columns()
@@ -52,20 +56,30 @@ class PipelineSaver:
         # create metadata for this run
         self._upsert_metadata(start_day, end_day)
 
-    def _init_db(self, db_conn:sqlite3.Connection, start_fresh:bool):
-        # Init DB
-        self.db_conn = db_conn
-        cursor = self.db_conn.cursor()
-        if start_fresh:
-            cursor.execute(f'DROP TABLE IF EXISTS {const.TABLE_NAME}')
-            cursor.execute(f'DROP TABLE IF EXISTS {METADATA_TABLE}')
-        # Create main indicator data table
-        columns = [f'{col_name} {col_type}'
-                for col_name, col_type in 
-                const.KEY_COLMNS + const.VALUE_COLUMNS]
-        cursor.execute(f'CREATE TABLE IF NOT EXISTS {const.TABLE_NAME} ({",".join(columns)})')
+    def _init_db(self):
+        """Init database""" 
+        for col in self.pipeline_maker.get_columns():
+            self._init_ind_table(col)
+        self.db_conn.commit()
 
+    def _init_ind_table(self, ind_name:str):
+        cursor = self.db_conn.cursor()
+        if self.start_fresh:
+            # drop table if start from fresh
+            self.debug_logger.debug_print(2, f'Droping table {ind_name}, {const.get_ind_table_name(ind_name)}')
+            cursor.execute(f'DROP TABLE IF EXISTS {const.get_ind_table_name(ind_name)}')
+        # Create table
+        columns = [
+            f'{col_name} {col_type}'
+            for col_name, col_type in 
+            const.KEY_COLMNS + const.VALUE_COLUMNS]
+        cursor.execute(
+            f'CREATE TABLE IF NOT EXISTS '
+            f'{const.get_ind_table_name(ind_name)} ({",".join(columns)})')
+
+    def _create_meta_data_table(self):
         # create metadata table
+        cursor = self.db_conn.cursor()
         cursor.execute(f"""
             CREATE TABLE IF NOT EXISTS {METADATA_TABLE}
             (name text, value text)""")
@@ -85,10 +99,15 @@ class PipelineSaver:
 
     def _get_metadata(self, key) -> str | None:
         cursor = self.db_conn.cursor()
-        results = cursor.execute(f'select name, value from {METADATA_TABLE}').fetchall()
-        for name, value in results:
-            if key == name:
-                return value
+        try:
+            results = cursor.execute(f'select name, value from {METADATA_TABLE}').fetchall()
+            for name, value in results:
+                if key == name:
+                    return value
+        except sqlite3.OperationalError as e:
+            if f'no such table: {METADATA_TABLE}' in str(e):
+                return None
+            raise e
         return None
     
     def _get_existing_columns(self) -> list[str]:
@@ -127,40 +146,35 @@ class PipelineSaver:
         # trade day is the day to place trade, by the nature of zipline pipeline
         # the pipeline data provided for the trade day is calcuated from yesterday's 
         # price
-        trade_day_str = const.format_trade_day(trade_day)
-        data_to_insert = []
-        for idx, row in pipeline_data.iterrows():
-            ticker = idx.symbol
-            sid = idx.sid
-            for col in pipeline_data.columns:
-                if pd.notna(row[col]):
-                    data_to_insert.append(( 
-                        trade_day_str,
-                        ticker,
-                        sid,
-                        col,
-                        row[col],
-                    ))
-        insert_sql = f"""
-        INSERT OR REPLACE INTO {const.TABLE_NAME} (
-          {const.TRADE_DAY},
-          {const.TICKER},
-          {const.SID},
-          {const.IND_NAME},
-          {const.IND_VALUE}
-        )
-        VALUES (?, ?, ?, ?, ?)
-        """
-        cursor = self.db_conn.cursor()
-        cursor.executemany(insert_sql, data_to_insert)
+        trade_day_str = const.format_trade_day(trade_day)        
+        for col in pipeline_data.columns:
+            data_to_insert = [
+                (trade_day_str, idx.symbol, idx.sid, value)
+                for idx, value in pipeline_data[col].items()
+                if pd.notna(value)
+            ]
+            insert_sql = f"""
+            INSERT OR REPLACE INTO {const.get_ind_table_name(col)} (
+                {const.TRADE_DAY},
+                {const.TICKER},
+                {const.SID},
+                {const.IND_VALUE}
+                )
+                VALUES (?, ?, ?, ?)
+            """
+            cursor = self.db_conn.cursor()
+            cursor.executemany(insert_sql, data_to_insert)
         self.db_conn.commit()
 
     def create_index(self):
         cursor = self.db_conn.cursor()
-        # Create index
-        sql = f"""
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_1 ON 
-        {const.TABLE_NAME} ({",".join(col for col, _ in const.KEY_COLMNS)})
-        """
-        cursor.execute(sql)
+        for ind_name in self.pipeline_maker.get_columns():
+            # Create index
+            sql = f"""
+            CREATE UNIQUE INDEX IF NOT EXISTS
+            idx_{const.get_ind_table_name(ind_name)} ON 
+            {const.get_ind_table_name(ind_name)} 
+            ({",".join(col for col, _ in const.KEY_COLMNS)})
+            """
+            cursor.execute(sql)
         self.db_conn.commit()

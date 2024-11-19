@@ -28,7 +28,7 @@ DAY3 = '2022-01-01'
 TICKERS = [Equity('AAPL'), Equity('TSLA')]
 
 DF = pd.DataFrame({
-    'atr_10': [10, 29],
+    'atrp_20': [10, 29],
     'close': [20, 39],
     'adx_10': [1, 9],
 }, index=TICKERS)
@@ -45,7 +45,12 @@ class TestPipelineSaver(unittest.TestCase):
         self.saver.create_index()
         
     def tearDown(self) -> None:
-        self.db_conn.close()
+        try:
+            self.db_conn.rollback()
+        except:
+            pass
+        finally:
+            self.db_conn.close()
 
     def test_init_metadata(self):
         self.assertEqual(DAY1, self.saver._get_metadata('start_day'))
@@ -64,6 +69,16 @@ class TestPipelineSaver(unittest.TestCase):
         with self.assertRaises(MismatchDateRangeException):
             saver2.init(DEBUG_LOGGER, pd.Timestamp(DAY3), pd.Timestamp(DAY1))
 
+    def test_date_range_mismatch_but_start_fresh(self):        
+        saver2 = PipelineSaver(strategies=[TestStrategy()],
+                               db_conn=self.db_conn,
+                               start_fresh=True)
+        # end day mismatch
+        saver2.init(DEBUG_LOGGER, pd.Timestamp(DAY1), pd.Timestamp(DAY3))
+        
+        # start day mismatch
+        saver2.init(DEBUG_LOGGER, pd.Timestamp(DAY3), pd.Timestamp(DAY1))
+
     def test_column_remove(self):
         saver2 = PipelineSaver(strategies=[TestStrategy()],
                                db_conn=self.db_conn,
@@ -80,28 +95,28 @@ class TestPipelineSaver(unittest.TestCase):
         saver2.init(DEBUG_LOGGER, pd.Timestamp(DAY1), pd.Timestamp(DAY2))
         self.assertEqual('atrp_30', saver2._get_metadata('columns'))
 
-    def get_all_records(self):
+    def get_all_records(self, table_name):
         cursor = self.db_conn.cursor()
-        return cursor.execute(f'SELECT * FROM {const.TABLE_NAME}').fetchall()
+        return cursor.execute(f'SELECT * FROM {table_name}').fetchall()
     
     def test_record_pipeline_data_first_time(self):
         self.saver.record_pipeline_data(
             pd.Timestamp(DAY1),
             DF)
         
-        all_records = self.get_all_records()
-        self.assertEqual(6, len(all_records))
+        all_records = self.get_all_records(const.get_ind_table_name('close'))
+        self.assertEqual(2, len(all_records))
 
     def test_record_pipeline_data_second_time(self):
         self.saver.record_pipeline_data(
             pd.Timestamp(DAY1),
             DF)
         
-        all_records = self.get_all_records()
-        self.assertEqual(6, len(all_records))
+        all_records = self.get_all_records(const.get_ind_table_name('atrp_20'))
+        self.assertEqual(2, len(all_records))
         
         self.saver.record_pipeline_data(pd.Timestamp(DAY1), DF)
-        self.assertEqual(6, len(self.get_all_records()))
+        self.assertEqual(2, len(self.get_all_records(const.get_ind_table_name('atrp_20'))))
         
         self.saver.record_pipeline_data(pd.Timestamp(DAY2), DF)
-        self.assertEqual(12, len(self.get_all_records()))
+        self.assertEqual(4, len(self.get_all_records(const.get_ind_table_name('atrp_20'))))

@@ -1,5 +1,6 @@
 
 from functools import partial
+import sqlite3
 import pandas as pd
 import argparse
 import zipline
@@ -14,7 +15,7 @@ from zipbird.utils.runner_util import supress_warnings, timing
 from zipbird.utils.timer_context import TimerContext
 from zipbird.strategy.pipeline_saver import PipelineSaver
 from zipbird.strategy.pipeline_loader import PipelineLoader
-from zipbird.strategy.pipleine_const import get_db_conn, has_db_file
+from zipbird.strategy.pipleine_const import has_db_file
 
 supress_warnings()
 
@@ -29,7 +30,7 @@ def run():
     parser.add_argument('-b', '--bundle', default='norgatedata-debug')
     parser.add_argument('-l', '--label', default='',
                         help='label for output files')
-    parser.add_argument('--db_name', default='pipeline-data',
+    parser.add_argument('--db_name', default='results/pipeline-data.db',
                         help='database file name, will be under results/<db_name>.db')
     parser.add_argument('--start_fresh_db', default=False,
                         help='If true erase existing db table and start fresh')
@@ -55,52 +56,57 @@ def run():
     strategies = [se_models.STRATEGY_FUNC_MAP[name] for name in strategy_names]
     timer_context = TimerContext()
 
-    if args.command == 'dump':
-        pipeline_saver = PipelineSaver(
-            strategies,
-            get_db_conn(args.db_name),
-            start_fresh=args.start_fresh_db)
+    db_conn = None
+    try: 
+        if args.command == 'dump':
+            db_conn = sqlite3.connect(args.db_name)
+            pipeline_saver = PipelineSaver(
+                strategies,
+                db_conn,
+                start_fresh=args.start_fresh_db)
 
-        run_dump_internal(
-            timer_context,
-            start_time,
-            end_time,
-            pipeline_saver,
-            int(args.debug_level),
-            args.bundle)
-        with timer_context.timer('create index'):
-            pipeline_saver.create_index()
+            run_dump_internal(
+                timer_context,
+                start_time,
+                end_time,
+                pipeline_saver,
+                int(args.debug_level),
+                args.bundle)
+            with timer_context.timer('create index'):
+                pipeline_saver.create_index()
 
-    elif args.command == 'load':
-        if len(strategies) > 1:
-            print('Can load only one strategy')
-            return
-        
-        if not has_db_file(args.db_name):
-            print(f'No database found for {args.db_name}')
-            return
-        
-        pipeline_loader = PipelineLoader(
-            strategies[0],
-            get_db_conn(args.db_name))
-        
-        run_load_internal(
-            timer_context,
-            start_time,
-            end_time,
-            pipeline_loader,
-            int(args.debug_level),
-            args.bundle)
-        
-        utils.dump_replay_orders(
-            strategy_names[0],
-            start_time,
-            end_time,
-            strategies[0],
-            args.label
-        )
-    else:
-        raise ValueError(f'Unknown command {args.command}')
+        elif args.command == 'load':
+            if len(strategies) > 1:
+                print('Can load only one strategy')
+                return
+            
+            if not has_db_file(args.db_name):
+                print(f'No database found for {args.db_name}')
+                return
+            db_conn = sqlite3.connect(f'file:/{args.db_name}?mode=ro', uri=True)
+            pipeline_loader = PipelineLoader(
+                strategies[0],
+                db_conn)
+            
+            run_load_internal(
+                timer_context,
+                start_time,
+                end_time,
+                pipeline_loader,
+                int(args.debug_level),
+                args.bundle)
+            
+            utils.dump_replay_orders(
+                strategy_names[0],
+                start_time,
+                end_time,
+                strategies[0],
+                args.label
+            )
+        else:
+            raise ValueError(f'Unknown command {args.command}')
+    finally:
+        db_conn.close()
 
     timer_context.report()
 
@@ -170,6 +176,7 @@ def run_load_internal(timer_context: TimerContext,
                       debug_level:int,
                       bundle:str):    
     debug_logger = logger_util.DebugLogger(debug_level=debug_level)
+    pipeline_loader.init(debug_logger=debug_logger, end_day=end_time, timer_context=timer_context)
     return zipline.run_algorithm(
         start=start_time,
         end=end_time,
