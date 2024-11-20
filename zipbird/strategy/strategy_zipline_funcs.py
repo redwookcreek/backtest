@@ -60,7 +60,7 @@ def before_trading_start_use_loader(pipeline_loader:PipelineLoader,
                                     timer_context: TimerContext,
                                     context:TradingAlgorithm,
                                     data):
-    today = zipline_api.get_datetime().date()
+    today = pd.Timestamp(zipline_api.get_datetime().date())
     with timer_context.timer('load_pipeline_data'):
         pipeline_data = pipeline_loader.load_for_trade_day(trade_day=today)
     
@@ -78,6 +78,6 @@ def load_initialize_zipline_use_loader(pipeline_loader:PipelineLoader,
                                        timer_context: TimerContext,
                                        debug_logger:logger_util.DebugLogger,
                                        context):
-    pipeline_loader.init(debug_logger=debug_logger)
+    pipeline_loader.init(debug_logger=debug_logger, timer_context=timer_context)
     _init_internal(pipeline_loader.strategy, debug_logger, context)
     
