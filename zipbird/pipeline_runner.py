@@ -20,6 +20,14 @@ from zipbird.strategy.pipleine_const import has_db_file
 supress_warnings()
 
 def run():
+    """
+    This has two commands, "dump" dump all indicators defined in stratgies to a sqlite
+    db, to be used later
+    "load" runs a strategy using the data dumped in sqlite db.
+
+    This is a failed experiment to improve run speed. Turns out this is not faster than
+    zipline's pipeline.
+    """
     parser = argparse.ArgumentParser(
         prog='StrategyRunner',
         description='Runs back test strategies')
