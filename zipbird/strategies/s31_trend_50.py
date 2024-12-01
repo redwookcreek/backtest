@@ -40,7 +40,7 @@ class S31Trend50(BaseStrategy):
         # universe_screen = (universe_screen & indexconstituent)        
         # pipeline_maker.add_universe(universe_screen=universe_screen)
         pipeline_maker.add_dollar_volume_rank_universe(
-            max_rank=1000, min_close=1, window_length=200)
+            max_rank=500, min_close=1, window_length=200)
         filter = self.prepare_pipeline_columns(pipeline_maker)
         pipeline_maker.add_filter(
             filter=filter,

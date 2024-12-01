@@ -20,7 +20,13 @@ class BaseStrategy:
         return self.params
 
     def make_pipeline(self, pipeline_maker:PipelineMaker) -> pd.DataFrame:
-        """Make pipeline"""
+        pipeline_maker.add_dollar_volume_rank_universe(
+            min_close=self.params['min_price'],
+            max_rank=self.params['dollar_volume_rank_max'],
+            window_length=self.params['dollar_volume_rank_window'],
+        )
+        filter = self.prepare_pipeline_columns(pipeline_maker)
+        pipeline_maker.add_filter(filter=filter, filter_name='st_filter')
 
     def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker) -> pd.DataFrame:
         """Create zipline pipeline columns"""

@@ -18,8 +18,7 @@ class S1WeeklyRotationStrategy(BaseStrategy):
         super().__init__(strategy_name, params)
         self.last_balance_day = None
 
-    def make_pipeline(self, pipeline_maker:PipelineMaker):
-        self.prepare_pipeline_columns(pipeline_maker)
+    def make_pipeline(self, pipeline_maker:PipelineMaker):        
         unadjusted_close = NorgateDataUnadjustedClose()
         indexconstituent = NorgateDataIndexConstituent('S&P 500')
         dollar_volume_rank = factor_utils.DollarVolumeRankFactor(
@@ -38,6 +37,7 @@ class S1WeeklyRotationStrategy(BaseStrategy):
                 (dollar_volume_rank < 1000)
             )
         pipeline_maker.add_universe(universe_screen)
+        self.prepare_pipeline_columns(pipeline_maker)
 
     def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
         """Create zipline pipeline columns"""

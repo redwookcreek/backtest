@@ -66,7 +66,7 @@ def before_trading_start_use_loader(pipeline_loader:PipelineLoader,
     
     # loaded index are tickers, convert them to zipline symbol
     with timer_context.timer('convert to symbol'):        
-        pipeline_data.index = pipeline_data.index.map(sid_to_zipline_symbol)
+        pipeline_data.index = pipeline_data.index.map(ticker_to_zipline_symbol)
 
     with timer_context.timer('run trading'):
         _run_for_one_day(strategy_executor=pipeline_loader.strategy,

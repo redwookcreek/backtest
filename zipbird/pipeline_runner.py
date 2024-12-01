@@ -115,7 +115,8 @@ def run():
         else:
             raise ValueError(f'Unknown command {args.command}')
     finally:
-        db_conn.close()
+        if db_conn:
+            db_conn.close()
 
     timer_context.report()
 

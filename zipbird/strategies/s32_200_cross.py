@@ -24,8 +24,7 @@ SPX_TICKER = '$SPX'
 
 class S32Cross200MA(BaseStrategy):
     
-    def make_pipeline(self, pipeline_maker:PipelineMaker):
-        filter = self.prepare_pipeline_columns(pipeline_maker)
+    def make_pipeline(self, pipeline_maker:PipelineMaker):        
         # indexconstituent = NorgateDataIndexConstituent('S&P 500')
         # universe_screen = factor_utils.get_universe_screen(
         #         min_price=self.params['min_price'],
@@ -35,6 +34,7 @@ class S32Cross200MA(BaseStrategy):
         # universe_screen = (universe_screen & indexconstituent)
         # pipeline_maker.add_universe(universe_screen=universe_screen)
         pipeline_maker.add_dollar_volume_rank_universe(max_rank=1000, min_close=1, window_length=200)
+        filter = self.prepare_pipeline_columns(pipeline_maker)
         pipeline_maker.add_filter(
             filter=filter,
             filter_name='200_sma_cross',

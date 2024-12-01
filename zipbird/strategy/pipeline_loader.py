@@ -65,7 +65,7 @@ class PipelineLoader:
                  const.format_trade_day(self.chunk_end_day)] + self.columns)
         with self.timer_context.timer('pivot'):
           df_wide = df.pivot(
-              index=[const.TRADE_DAY, const.SID],
+              index=[const.TRADE_DAY, const.TICKER],
               columns=const.IND_NAME,
               values=const.IND_VALUE)
         self.chunk_df = df_wide

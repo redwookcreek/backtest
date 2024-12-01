@@ -12,20 +12,6 @@ from zipline.pipeline.data import USEquityPricing
 SPX_TICKER = '$SPX'
 
 class S21LongMOM(BaseStrategy):
-
-    def make_pipeline(self, pipeline_maker:PipelineMaker):
-        filter = self.prepare_pipeline_columns(pipeline_maker)
-
-        pipeline_maker.add_dollar_volume_rank_universe(
-            min_close=self.params['min_price'],
-            max_rank=self.params['dollar_volume_rank_max'],
-            window_length=self.params['dollar_volume_rank_window'],
-        )
-        pipeline_maker.add_filter(
-            filter=filter,
-            filter_name='mom_filter',
-        )
-
     def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
         """Create zipline pipeline"""
 

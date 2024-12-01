@@ -1,5 +1,6 @@
 from zipbird.position_manager.rotation_position_sizer import RotationPositionSizer
 from zipbird.position_manager.atr_position_sizer import ATRPositionSizer
+from zipbird.position_manager.split_target_position_sizer import SplitTargetPositionSizer
 from zipbird.strategy.indicator_loader import IndicatorLoader
 from zipbird.strategy.strategy_executor import StrategyExecutor
 
@@ -305,6 +306,14 @@ SE_S31_TREND_50 = StrategyExecutor(
     position_sizer=ATRPositionSizer(PARAMS_S31_TREND_50),
 )
 
+PARAMS_S31_SPLIT = PARAMS_S31_TREND_50.copy()
+PARAMS_S31_SPLIT['price_target_atr_multiple'] = 10
+
+SE_S31_TREND_50_SPLIT = StrategyExecutor(
+    strategy=S31Trend50('s31-split', PARAMS_S31_SPLIT),
+    position_sizer=SplitTargetPositionSizer(PARAMS_S31_SPLIT),
+)
+
 PARAMS_S32_200_CROSS = dict(
     min_price=1.0,
     avg_volume_days=20,
@@ -342,6 +351,7 @@ STRATEGY_FUNC_MAP = {
     's25_adx_mr_long': SE_S25_ADX_MR_LONG,
     's26_6day_surge_short': SE_S26_6DAY_SURGE_SHORT,
     's31_trend_50': SE_S31_TREND_50,
+    's31_trend_50_split': SE_S31_TREND_50_SPLIT,
     's32_200_cross': SE_S32_200_CROSS,
     'ind_loader': IndicatorLoader()
 }

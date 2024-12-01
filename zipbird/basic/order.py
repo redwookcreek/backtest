@@ -27,6 +27,11 @@ class Order:
         # self.stop already has a bar_count, but not all orders have stop
         self.bar_count = 0
 
+    def copy(self):
+        order = Order(self.stock, open_close=self.open_close, long_short=self.long_short,limit_price=self.limit_price)
+        order.stop = self.stop
+        return order
+
     def get_sign(self):
         """The amount or percentage are all positive, 
         The actual order amount depends on the if the
@@ -104,6 +109,16 @@ class ShareOrder(Order):
     def __init__(self, stock, open_close:OpenClose, long_short:LongShort, limit_price:float=None, amount:int=None):
         super().__init__(stock, open_close, long_short, limit_price)
         self.amount = amount
+
+    def copy(self):
+        order = ShareOrder(
+            stock=self.stock,
+            open_close=self.open_close,
+            long_short=self.long_short,
+            limit_price=self.limit_price,
+            amount=self.amount)
+        order.stop = self.stop
+        return order
     
     def amount_debug_str(self):
         return f'{self._order_type_str()} {self.amount or "---"}'
@@ -153,6 +168,16 @@ class PercentOrder(Order):
                  limit_price:float=None):
         super().__init__(stock, open_close, long_short, limit_price)
         self.target_percent = target_percent
+    def copy(self):
+        order = PercentOrder(
+            stock=self.stock,
+            open_close=self.open_close,
+            long_short=self.long_short,
+            target_percent=self.target_percent,
+            limit_price=self.limit_price
+        )
+        order.stop = self.stop
+        return order
 
     def get_percent_size(self):
         return self.target_percent

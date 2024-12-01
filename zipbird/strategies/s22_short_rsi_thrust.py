@@ -9,23 +9,8 @@ from zipline.protocol import Positions
 
 
 class S22ShortRSIThrust(BaseStrategy):
-
-    def make_pipeline(self, pipeline_maker:PipelineMaker):
-        filter = self.prepare_pipeline_columns(pipeline_maker)
-        
-        pipeline_maker.add_dollar_volume_rank_universe(
-            min_close=self.params['min_price'],
-            max_rank=self.params['dollar_volume_rank_max'],
-            window_length=self.params['dollar_volume_rank_window'],
-        )
-        pipeline_maker.add_filter(
-            filter=filter,
-            filter_name='mr_filter',
-        )
-        
     def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
         """Create zipline pipeline"""
-
         rsi = pipeline_maker.add_rsi(self.params['rsi_period'])
         atr = pipeline_maker.add_atr(self.params['atr_period'])
         adx = pipeline_maker.add_adx(self.params['adx_period'])

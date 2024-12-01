@@ -65,15 +65,15 @@ class DebugLogger:
             stop_loss_price = 0.0
             target_price = 0.0
             yesterday_close = pipeline_data['close'][stock]
-            days = sl_manager.get_day_count(stock)            
+            days = sl_manager.get_day_count(stock, pos.amount)            
             try:
-                stop_loss_price = sl_manager.get_stop_price(stock)
+                stop_loss_price = sl_manager.get_stop_price(stock, pos.amount)
                 stop_p = (sl_manager.get_stop_price(stock) / yesterday_close - 1) * 100
             except Exception as e:
                 stop_loss_price = -1
                 stop_p = -100
             try:
-                target_price = sl_manager.get_target_price(stock)
+                target_price = sl_manager.get_target_price(stock, pos.amount)
             except Exception:
                 target_price = -1
             
