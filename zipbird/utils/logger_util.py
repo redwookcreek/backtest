@@ -51,13 +51,9 @@ class DebugLogger:
     def print_current_positions(self, context, pipeline_data, strategy_executor, level=1):
         """Print current positions"""
         if not context.portfolio.positions:
-            return
-        
-        self.debug_print(
-            level, 
-            '-------------Current pos(%d)--------------: ' % len(context.portfolio.positions))
-        
+            return        
         positions = []
+        position_values = 0
         sl_manager = strategy_executor.position_manager
         for stock, pos in context.portfolio.positions.items():
             days = -1
@@ -68,7 +64,7 @@ class DebugLogger:
             days = sl_manager.get_day_count(stock, pos.amount)            
             try:
                 stop_loss_price = sl_manager.get_stop_price(stock, pos.amount)
-                stop_p = (sl_manager.get_stop_price(stock) / yesterday_close - 1) * 100
+                stop_p = (stop_loss_price / yesterday_close - 1) * 100
             except Exception as e:
                 stop_loss_price = -1
                 stop_p = -100
@@ -84,6 +80,7 @@ class DebugLogger:
             else:
                 stop_p = '{:9.2f}'.format(stop_p)
             sign = 1 if pos.amount > 0 else -1
+            position_values += pos.amount * yesterday_close
             positions.append((
                 stock.symbol,
                 pos.amount,
@@ -97,6 +94,15 @@ class DebugLogger:
                 target_price,
             ))
         positions.sort(key=lambda p: p[4], reverse=True)
+
+        leverage_ratio = 1 - (context.portfolio.cash / context.portfolio.portfolio_value)
+        self.debug_print(
+            level, 
+            f'----------Current: {len(context.portfolio.positions)} positions,'
+            f'leverage: {leverage_ratio:.2%}, '
+            f'cash: {context.portfolio.cash:,.2f}, '
+            f'position value: {position_values:,.0f}-------------- ')
+                
         self.debug_print(
             level, ('{:15s}' + ' {:>9s}' * 9).format(
                 'Stock', 'Amount', 'Equity', 'Portf%', 'P&L', 'Days', 'Last', 'Stop', 'Stop%', 'Target'))

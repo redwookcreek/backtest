@@ -60,7 +60,7 @@ class ReplayOrder:
                             self.close_date or '',
                             maybe_float(self.close_price),
                         ])
-    
+
     @classmethod
     def from_csv(cls, line):
         parts = line.strip().split(',')

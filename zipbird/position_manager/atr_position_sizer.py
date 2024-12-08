@@ -34,7 +34,7 @@ class ATRPositionSizer(PositionSizer):
                     self._get_stop_loss_diff(signal.stock, pipeline_data)),
                 time_stop=self.params.get('stop_loss_days', 0),
                 profit_target=self._get_profit_target(signal, pipeline_data),
-                trailing=self._get_tailing_stop(signal)))
+                trailing=self._get_tailing_stop(signal, pipeline_data['close'][signal.stock])))
             orders.append(order)                          
         return orders
                     
@@ -66,12 +66,16 @@ class ATRPositionSizer(PositionSizer):
         target_atr = self.params.get('price_target_atr_multiple', 0)
         if target_atr:
             return FixProfitTarget(signal.long_short,
-                                   self._get_atr(signal.stock, pipeline_data))
+                                   target_atr * self._get_atr(signal.stock, pipeline_data))
         return None
         
-    def _get_tailing_stop(self, signal):
+    def _get_tailing_stop(self, signal, last_close:float):
         trailing_percent = self.params.get('trailing_stop_percent', 0)
         if trailing_percent:
-            return PercentTrailingStop(signal.long_short, trailing_percent)
+            return PercentTrailingStop(
+                signal.long_short,
+                # last close is not exactly entering price, but this is close enough
+                enter_price=last_close,
+                trailing_percent=trailing_percent)
         else:
             return None

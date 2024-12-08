@@ -117,7 +117,7 @@ class ShareOrder(Order):
             long_short=self.long_short,
             limit_price=self.limit_price,
             amount=self.amount)
-        order.stop = self.stop
+        order.stop = self.stop.copy()
         return order
     
     def amount_debug_str(self):

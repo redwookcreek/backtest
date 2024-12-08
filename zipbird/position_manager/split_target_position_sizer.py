@@ -17,13 +17,15 @@ class SplitTargetPositionSizer(ATRPositionSizer):
         org_orders = super().get_orders(portfolio, signals, pipeline_data)
         orders = []
         for order in org_orders:
+            # order 1 no profit target
             new_order1 = order.copy()
-            new_order1.amount = new_order1.amount // 2
+            new_order1.amount = (new_order1.amount // 3) 
             new_order1.stop.profit_target = None
 
+            # order 2 has profit target
             new_order2 = order.copy()
-            new_order2.amount = new_order2.amount // 2
-            new_order2.stop.trailing_stop = None
+            new_order2.amount = (new_order2.amount // 3) * 2
+            
             orders.append(new_order1)
             orders.append(new_order2)
         return orders

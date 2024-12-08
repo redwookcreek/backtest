@@ -74,6 +74,7 @@ class Stop:
     def __init__(self, long_or_short):
         self.stop_price = None
         self.long_or_short = long_or_short
+        self.activated = True
 
     def get_stop_price(self) -> float:
         """Return the current stop price"""
@@ -83,6 +84,8 @@ class Stop:
 
     def is_triggered(self, data) -> bool:
         """Returns true if the stop has been triggered"""
+        if not self.activated:
+            return False
         if self.long_or_short == LongShort.Long:
             return data[COL_CLOSE] <= self.get_stop_price() 
         else:
@@ -123,18 +126,27 @@ class FixStop(Stop):
 
 class TrailingStop(Stop):
     """Used as price point for trailing stop"""
+    def __init__(self, long_or_short, enter_price:float):
+        super().__init__(long_or_short)
+        self.activated = False
+        self.enter_price = enter_price
 
     def update_stop_price(self, data) -> None:
         """Update the stop price based on latest price info"""
+        if self.long_or_short == LongShort.Long:
+            self.activated = data[COL_CLOSE] >= self.enter_price
+        else:
+            self.activated = data[COL_CLOSE] <= self.enter_price
 
 
 class PercentTrailingStop(TrailingStop):
 
-    def __init__(self, long_or_short: LongShort, trailing_percent: float):
-        super().__init__(long_or_short)
+    def __init__(self, long_or_short: LongShort, enter_price: float, trailing_percent: float):
+        super().__init__(long_or_short, enter_price)
         self.trailing_percent = trailing_percent
 
     def update_stop_price(self, data) -> None:
+        super().update_stop_price(data)
         last_close = data[COL_CLOSE]
         if self.long_or_short == LongShort.Long:
             cur_stop = self.stop_price if self.stop_price else 0
@@ -151,11 +163,12 @@ class PercentTrailingStop(TrailingStop):
 
 class ATRTrailingStop(TrailingStop):
 
-    def __init__(self, long_or_short: LongShort, trailing_atr_multiple: float):
-        super().__init__(long_or_short)
+    def __init__(self, long_or_short: LongShort, enter_price: float, trailing_atr_multiple: float):
+        super().__init__(long_or_short, enter_price)
         self.trailing_atr_multiple = trailing_atr_multiple
 
     def update_stop_price(self, data) -> None:
+        super().update_stop_price(data)
         last_close = data[COL_CLOSE]
         atr = data[COL_ATR]
         diff_price = self.trailing_atr_multiple * atr
@@ -202,12 +215,23 @@ class StopOrder:
         time_stop: int = 0,  # number of bars
         profit_target: Optional[ProfitTarget] = None,
         trailing: Optional[TrailingStop] = None,
+        trail_after_profit: bool = True,
     ):
         self.initial_stop = initial_stop
         self.time_stop = time_stop
         self.profit_target = profit_target
         self.trailing_stop = trailing
+        # If true, trailing stop only become effective after position is profitable
+        self.trail_after_profit = trail_after_profit
         self.bar_count = 0
+
+    def copy(self):
+        return StopOrder(
+            self.initial_stop,
+            self.time_stop,
+            self.profit_target,
+            self.trailing_stop,
+            self.trail_after_profit)
 
     def do_maintenance(self, open_price:float, data):
         """Do maintenance before each trading session"""

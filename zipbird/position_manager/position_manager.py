@@ -8,6 +8,7 @@ from zipline import api as zipline_api
 from zipline.finance import execution as zipline_execution
 
 from zipbird.replay.order_collector import OrderCollector
+from zipbird.basic.types import LongShort
 
 class DuplicatePendingOrderError(Exception):
     pass
@@ -95,28 +96,30 @@ class PositionManager:
         self.debug_logger = debug_logger
         self.replay_container = replay_container
 
-    def _find_managed_order(self, asset:Equity, amount:int):
-        for order in self.managed_orders.values():
-            if order.stock == asset and (not hasattr(order, 'amount') or order.amount == amount):
-                return order
-        return None
+    def _find_managed_orders(self, asset:Equity) -> list[Order]:
+        return [o for o in self.managed_orders.values() if o.stock == asset]
     
     def get_day_count(self, asset:Equity, amount:int):
-        order = self._find_managed_order(asset, amount)
-        if order:
-            return order.get_bar_count()
+        orders = self._find_managed_orders(asset)
+        if orders:
+            return max(o.get_bar_count() for o in orders)
         else:
             return -1
     
-    def get_stop_price(self, asset:Equity, amount:int):
-        order = self._find_managed_order(asset, amount)
-        if order and order.stop:
-            return order.stop.get_stop_price()
+    def get_stop_price(self, asset:Equity, amount:int):        
+        orders = self._find_managed_orders(asset)
+        if orders:
+            stop_prices = [o.stop.get_stop_price() for o in orders if o.stop]
+            if orders[0].long_short == LongShort.Long:
+                return min(stop_prices)
+            else:
+                return max(stop_prices)
         return -1
     
     def get_target_price(self, asset:Equity, amount:int):
-        order = self._find_managed_order(asset, amount)
-        if order and order.stop:
+        orders = self._find_managed_orders(asset)
+        target = None
+        for order in orders:
             return order.stop.get_target_price()
         return -1
     
@@ -167,14 +170,43 @@ class PositionManager:
         self._adjust_stop_orders(positions, data)
         closed_order_ids = self._close_out_positions(positions, data)
         self._send_out_stop_orders(closed_order_ids)
+        self._close_replay_orders_for_auto_close_positions(today, data)
 
     def _get_expired_assets(self, today:datetime.date, asset_list:list[Equity]):
-        today = pd.Timestamp(today)
         return [asset
                 for asset in asset_list
                 if (asset.auto_close_date and 
-                    asset.auto_close_date <= today)]
+                    asset.auto_close_date <= pd.Timestamp(today))]
+    
+    def _close_replay_orders_for_auto_close_positions(self, today:datetime.date,
+                                                      pipeline_data:pd.DataFrame):
+        """
+        Auto closed positions won't call the order fill callback, the closing price
+        and closing date of the position won't be recorded by the callback.
 
+        Record the positions as closed one day before auto close day.
+        """
+        all_assets_in_position = {}
+        for id, order in self.managed_orders.items():
+            all_assets_in_position.setdefault(order.stock, []).append(id)
+        
+        yesterday = pd.Timestamp(today) - pd.Timedelta(1)
+        assets_about_to_auto_close = [
+            asset
+            for asset in all_assets_in_position.keys()
+            if (asset.auto_close_date and 
+                asset.auto_close_date <= yesterday)]
+        for asset in assets_about_to_auto_close:
+            # record the auto close positions
+            # This is an estimate of closing price
+            last_close = pipeline_data['close'][asset]
+            for order_id in all_assets_in_position[asset]:
+                order = self.managed_orders[order_id]
+                self.replay_container.add_close_order(
+                        order=order,
+                        close_date=today,
+                        close_price=last_close)
+                
     def _remove_expired_positions(self, today:datetime.date, positions:Positions):
         all_assets_in_position = {}
         for id, order in self.managed_orders.items():

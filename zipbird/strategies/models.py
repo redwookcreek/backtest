@@ -307,7 +307,7 @@ SE_S31_TREND_50 = StrategyExecutor(
 )
 
 PARAMS_S31_SPLIT = PARAMS_S31_TREND_50.copy()
-PARAMS_S31_SPLIT['price_target_atr_multiple'] = 10
+PARAMS_S31_SPLIT['price_target_atr_multiple'] = 30
 
 SE_S31_TREND_50_SPLIT = StrategyExecutor(
     strategy=S31Trend50('s31-split', PARAMS_S31_SPLIT),
@@ -337,6 +337,14 @@ SE_S32_200_CROSS = StrategyExecutor(
     position_sizer=ATRPositionSizer(PARAMS_S32_200_CROSS),
 )
 
+PARAMS_S32_SPLIT = PARAMS_S32_200_CROSS.copy()
+PARAMS_S32_SPLIT['price_target_atr_multiple'] = 15
+
+SE_S32_200_CROSS_SPLIT = StrategyExecutor(
+    strategy=S32Cross200MA('s32-split', PARAMS_S32_SPLIT),
+    position_sizer=SplitTargetPositionSizer(PARAMS_S32_SPLIT),
+)
+
 STRATEGY_FUNC_MAP = {
     's1_sp500': SE_S1_WEEKLY_ROTATION_SP500,
     's1_sp500_m': SE_S1_MONTHLY_ROTATION_SP500,
@@ -353,5 +361,6 @@ STRATEGY_FUNC_MAP = {
     's31_trend_50': SE_S31_TREND_50,
     's31_trend_50_split': SE_S31_TREND_50_SPLIT,
     's32_200_cross': SE_S32_200_CROSS,
+    's32_200_cross_split': SE_S32_200_CROSS_SPLIT,
     'ind_loader': IndicatorLoader()
 }

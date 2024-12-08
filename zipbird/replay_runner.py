@@ -14,6 +14,7 @@ from zipbird.replay.replay_strategy import ReplayStrategy
 import zipbird.strategies.models as se_models
 from zipbird.utils import logger_util, utils
 from zipbird.utils.runner_util import supress_warnings, timing
+from zipbird.notebook.performance_summary import output_performance
 
 supress_warnings()
 
@@ -73,6 +74,17 @@ def run():
             perf,            
             None,
             args.label)
+    output_performance(
+        prefix='replay',
+        start_date=start_time,
+        end_date=end_time,
+        perf=perf,
+        strategy_name='replay',
+        strategy_params=None,
+        label=args.label,
+        bundle=args.bundle,
+        replay_orders=replayer.orders     
+    )
 
 def add_past_orders(
         replayer: ReplayStrategy,

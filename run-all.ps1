@@ -34,9 +34,9 @@ for ($i = 0; $i -lt $strategies.Length; $i++) {
 # python .\zipbird\runner.py s31_trend_50 -s $StartDay -e $EndDay -b norgatedata-sp500 -d 0  > logs/s31
 # python .\zipbird\runner.py s32_200_cross -s $StartDay -e $EndDay -b norgatedata-sp500 -d 0  > logs/s32
 
-#  python.exe .\zipbird\replay_runner.py -s $StartDay -e 1995-12-31 -b norgatedata-all-us `
-#  --replay_strategies s1_sp500 s22_short_rsi_thrust s23_long_mr s24_low_vol_long s25_adx_mr_long s26_6day_surge_short `
-#  --replay_weights 0.25 0.5 0.25 0.25 0.25 0.5 -d 1 > logs/r1
+ python.exe .\zipbird\replay_runner.py -s $StartDay -e 1995-12-31 -b norgatedata-all-us `
+ --replay_strategies s1_sp500 s22_short_rsi_thrust s23_long_mr s24_low_vol_long s25_adx_mr_long s26_6day_surge_short `
+ --replay_weights 0.25 0.5 0.25 0.25 0.25 0.5 -d 1 > logs/r1
 
 #  python.exe .\zipbird\replay_runner.py -s $StartDay -e $EndDay -b norgatedata-all-us `
 #  --replay_strategies s1_sp500 `

@@ -6,6 +6,9 @@ import argparse
 import zipline
 import pickle
 
+from zipbird.notebook import performance_summary
+from zipbird.replay.replay_order import ReplayOrder
+from zipbird.replay.order_collector import OrderCollector
 import zipbird.strategies.models as se_models
 from zipbird.strategy.strategy_zipline_funcs import initialize_zipline, before_trading_start_zipline
 from zipbird.utils import logger_util, utils
@@ -18,7 +21,7 @@ def run():
         prog='StrategyRunner',
         description='Runs back test strategies')
     parser.add_argument('strategy_name')
-    parser.add_argument('-a', '--action', default='run', choices=['run', 'verify'])
+    parser.add_argument('-a', '--action', default='run', choices=['run', 'perf'])
     parser.add_argument('-s', '--start', default='2015-01-01')
     parser.add_argument('-e', '--end', default='2015-12-31')
     parser.add_argument('-u', '--test_universe', default='')
@@ -71,14 +74,46 @@ def run():
             args.label
         )
 
-    elif action == 'verify':
-        verify_strategy_result(
+        performance_summary.output_performance(
             prefix=args.strategy_name,
             start_date=start_time,
             end_date=end_time,
-            strategy=strategy,
-            label=args.label
+            strategy_name=strategy.strategy.get_name(),
+            strategy_params={},
+            perf=perf,
+            label=args.label,
+            bundle=args.bundle,
+            replay_orders=strategy.replay_order_container,
         )
+
+    elif action == 'perf':
+        replay_filename = utils.replay_filename(
+            args.strategy_name, start_time, end_time, args.label)
+        replay_orders = OrderCollector(args.strategy_name)
+        with open(replay_filename, 'r') as file:
+            for line in file:
+                order = ReplayOrder.from_csv(line)
+                replay_orders.add_round_trip(order)
+
+        pickle_filename = utils.pickle_filename(
+            prefix=args.strategy_name,
+            start_date=start_time,
+            end_date=end_time,
+            label=args.label,)
+        with open(pickle_filename, 'rb') as file:
+            loaded = pickle.load(file)
+            perf = loaded['perf']
+            performance_summary.output_performance(
+                prefix=args.strategy_name,
+                start_date=start_time,
+                end_date=end_time,
+                strategy_name=strategy.strategy.get_name(),
+                strategy_params={},
+                perf=perf,
+                label=args.label,
+                bundle=args.bundle,
+                replay_orders=replay_orders,
+            )
 
 @timing
 def run_internal(start_time, end_time, strategy, capital, debug_level, bundle):
@@ -95,20 +130,6 @@ def run_internal(start_time, end_time, strategy, capital, debug_level, bundle):
         bundle=bundle,
     )
 
-@timing
-def verify_strategy_result(prefix:str, start_date:pd.Timestamp, end_date:pd.Timestamp, strategy_class, label):
-    filename = utils.pickle_filename(prefix, start_date, end_date, label)
-    with open(filename, 'rb') as file:
-        loaded = pickle.load(file)
-        #perf = loaded['perf']
-        round_trip_tracker = loaded['round_trip_tracker']
-        params = loaded['params']
-        for round_trip in round_trip_tracker.round_trips():
-            msg = strategy_class.verify_round_trip(round_trip, params)
-            if msg:
-                print('--------------------')
-                print(pd.Series(round_trip_tracker.round_trip_to_dict(round_trip)))
-                print('\n'.join(msg))
 
 if __name__ == '__main__':
     run()

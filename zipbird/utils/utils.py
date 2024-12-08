@@ -4,7 +4,7 @@ import numpy as np
 import pickle
 import math
 
-def print_stats(context, perf):
+def get_main_perf(perf):
     perf['max'] = perf.portfolio_value.cummax()
     perf['dd'] = perf.portfolio_value / perf['max'] - 1
     maxdd = perf['dd'].min()
@@ -12,6 +12,10 @@ def print_stats(context, perf):
     ann_ret = np.power(
         perf.portfolio_value.iloc[-1] / perf.portfolio_value.iloc[0],
         252 / len(perf)) - 1
+    return maxdd, ann_ret
+
+def print_stats(context, perf):
+    maxdd, ann_ret = get_main_perf(perf)
     print('Annualized Return: {:.2%}, Max Drawdown: {:.2%}'.format(ann_ret, maxdd))
 
 
