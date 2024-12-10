@@ -9,11 +9,13 @@ from zipline.pipeline import Pipeline
 from zipline.pipeline.data import USEquityPricing
 from zipline.finance.slippage import DailyBarReplayNoSplippage
 
+from zipbird.replay.order_collector import OrderCollector
 from zipbird.replay.replay_order import ReplayOrder
 from zipbird.replay.replay_strategy import ReplayStrategy
 import zipbird.strategies.models as se_models
 from zipbird.utils import logger_util, utils
 from zipbird.utils.runner_util import supress_warnings, timing
+from zipbird.utils.timer_context import TimerContext
 from zipbird.notebook.performance_summary import output_performance
 
 supress_warnings()
@@ -55,17 +57,23 @@ def run():
             print('Strategy name {} unknown, choose from: {}'.format(
                 strategy_name, se_models.STRATEGY_FUNC_MAP.keys()))
             return
-    strategies = [se_models.STRATEGY_FUNC_MAP[name] for name in strategy_names]    
+    strategies = [se_models.STRATEGY_FUNC_MAP[name] for name in strategy_names]
+
+    timer_context = TimerContext()
+    debug_logger = logger_util.DebugLogger(debug_level=int(args.debug_level))
+
     replayer = ReplayStrategy(
         strategies,
         strategy_weights,
+        debug_logger=debug_logger,
+        timer_context=timer_context
     )
+
     add_past_orders(replayer, strategy_names, start_time, end_time, '') #, args.label)
     perf = run_internal(start_time,
                  end_time,
                  replayer,
                  float(args.capital),
-                 int(args.debug_level),
                  args.bundle)
     utils.dump_pickle(
             'replay',
@@ -74,6 +82,10 @@ def run():
             perf,            
             None,
             args.label)
+    order_collector = OrderCollector('replay')
+    for orders in replayer.orders.values():
+        for order in orders:
+            order_collector.add_round_trip(order)
     output_performance(
         prefix='replay',
         start_date=start_time,
@@ -83,7 +95,7 @@ def run():
         strategy_params=None,
         label=args.label,
         bundle=args.bundle,
-        replay_orders=replayer.orders     
+        replay_orders=order_collector,    
     )
 
 def add_past_orders(
@@ -93,24 +105,28 @@ def add_past_orders(
         end_time: pd.Timestamp,
         label: str) -> list[ReplayOrder]:
     for strategy_name in strategy_names:
-        filename = utils.replay_filename(
-            strategy_name, start_time, end_time, label)
-        replayer.load_orders(filename)
+        with replayer.timer_context.timer('read files'):
+            filename = utils.replay_filename(
+                strategy_name, start_time, end_time, label)
+        with replayer.timer_context.timer('load orders'):
+            replayer.load_orders(filename)
 
 @timing
 def run_internal(start_time:pd.Timestamp,
                  end_time:pd.Timestamp,
                  replayer:ReplayStrategy,
                  capital:float,
-                 debug_level:int,
                  bundle:str):
-    debug_logger = logger_util.DebugLogger(debug_level=debug_level)
+    def report_status(context, perf):
+        utils.print_stats(context, perf)
+        replayer.timer_context.report()
+
     return zipline.run_algorithm(
         start=start_time,
         end=end_time,
-        initialize=partial(initialize_zipline, replayer, debug_logger),
+        initialize=partial(initialize_zipline, replayer),
         before_trading_start=partial(before_trading_start_zipline, replayer),
-        analyze=utils.print_stats,
+        analyze=report_status,
         capital_base=capital,
         data_frequency='daily',
         bundle=bundle,
@@ -122,9 +138,10 @@ _PIPELINE_NAME = 'replay_pipeline'
 def make_pipeline():
     return Pipeline(columns={'close': USEquityPricing.close.latest})
 
-def initialize_zipline(replayer:ReplayStrategy, debug_logger:logger_util.DebugLogger, context):
+def initialize_zipline(replayer:ReplayStrategy,
+                       context):
     context.replayer = replayer
-    replayer.init(debug_logger)
+    replayer.init()
     zipline_api.attach_pipeline(
         make_pipeline(),
         _PIPELINE_NAME,

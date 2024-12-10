@@ -11,6 +11,7 @@ import io
 import base64
 import contextlib
 
+from zipbird.replay.order_collector import OrderCollector
 from zipbird.utils import utils
 
 def _benchmark_returns(returns):
@@ -421,7 +422,7 @@ def output_performance(
         perf,
         label:str,
         bundle:str,
-        replay_orders):
+        replay_orders:OrderCollector):
     filename = performance_filename(prefix, start_date, end_date, label)
     returns, positions, transactions = pf.utils.extract_rets_pos_txn_from_zipline(perf)
     maxdd, ann_ret = utils.get_main_perf(perf)
@@ -459,7 +460,7 @@ def output_performance(
         save_pyfolio_tearsheet_with_text(returns, positions, transactions, f)
         f.write('</body>')
 
-def win_rate_stats(trades):
+def win_rate_stats(trades:OrderCollector):
     df = trades.to_dataframe()
     df['is_win'] = df['profit_pct'] > 0
     df['is_loss'] = df['profit_pct'] < 0

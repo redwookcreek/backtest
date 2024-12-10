@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import date
 import pandas as pd
 
+from zipbird.utils.timer_context import TimerContext
 from zipbird.utils.logger_util import DebugLogger
 from zipbird.basic.types import LongShort
 from zipbird.replay.replay_order import ReplayOrder
@@ -31,12 +32,17 @@ class ReplayStrategy:
     orders: dict[date, list[ReplayOrder]]
     strategies: dict[str, StrategyExecutor]
     debug_logger: DebugLogger
+    timer_context: TimerContext
 
     def __init__(self, 
                  strategys:list[StrategyExecutor],
-                 weights:list[float]):
+                 weights:list[float],
+                 debug_logger:DebugLogger,
+                 timer_context:TimerContext):
         self.strategy_weight = {}
         self.strategies = {}
+        self.debug_logger = debug_logger
+        self.timer_context = timer_context
         for strategy, weight in zip(strategys, weights):
             name = strategy.strategy.get_name()
             self.strategy_weight[name] = weight
@@ -46,11 +52,11 @@ class ReplayStrategy:
         self.zipline_api = zipline_api
         self.pending_orders = {}
 
-    def init(self, debug_logger:DebugLogger):
-        self.debug_logger = debug_logger
+    def init(self):
         for day_orders in self.orders.values():
-            for order in day_orders:                
-                order.asset = self.zipline_api.symbol(order.symbol)
+            for order in day_orders:
+                with self.timer_context.timer('load symbols'):
+                    order.asset = self.zipline_api.symbol(order.symbol)
     
     def _load_one_file_from_csv(self, filename:str) -> list[ReplayOrder]:
         result = []
