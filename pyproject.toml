@@ -3,6 +3,9 @@ name = "backtest"
 version = "0.2.0"
 description = ""
 authors = ["Wei Liu"]
+packages = [
+    { include = "zipbird", from = "." }
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"

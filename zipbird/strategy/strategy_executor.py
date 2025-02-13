@@ -1,5 +1,6 @@
 import pandas as pd
 
+from zipline import api
 from zipbird.replay.order_collector import OrderCollector
 from zipbird.utils.logger_util import DebugLogger
 from zipbird.basic.order import Order, ShareOrder
@@ -38,6 +39,7 @@ class StrategyExecutor:
         This is only used by pipeline saver
         """
         self.strategy.prepare_pipeline_columns(pipeline_maker)
+        pipeline_maker.add_dollar_volume_rank(100)
 
     def make_pipeline(self):
         """Creates pipeline
@@ -54,7 +56,8 @@ class StrategyExecutor:
         self.position_manager.do_maintenance(
             portfolio.today,
             portfolio.positions, pipeline_data)
-        
+        #print([s for s in pipeline_data.index.tolist() if s.symbol in ['CYTK', 'RIOT', 'MARA','CLSK']])
+        #print(pipeline_data.loc[[api.symbol(s) for s in ]])
         if use_pipeline_loader:
             filtered_pipeline_data= self.strategy.filter_pipeline_data(pipeline_data)
         else:
@@ -64,6 +67,17 @@ class StrategyExecutor:
             positions=portfolio.positions, 
             pipeline_data=pipeline_data,
             filtered_pipeline_data=filtered_pipeline_data)
+        
+        if len(signals) > 0:
+            signal_str = ', '.join([f'{s.stock.symbol}: {s.limit_price}' for s in signals])
+            self.debug_logger.debug_print(
+                2, 
+                f'Generated signals: {len(signals)}, {signal_str}')
+            with pd.option_context('display.max_columns', None, 'display.width', None):
+                self.debug_logger.debug_print(
+                    2,
+                    filtered_pipeline_data.loc[[s.stock for s in signals]]
+                )
         
         to_open, to_close = _split_signals(signals)
         self.debug_logger.debug_print(5, f'To open signals: {len(to_open)}, {to_open}')
@@ -90,7 +104,10 @@ class StrategyExecutor:
             orders=open_orders + close_orders)
 
         # Send orders
-        self.position_manager.send_orders(open_orders + close_orders)
+        self.position_manager.send_orders(
+            open_orders + close_orders,
+            portfolio.today,
+            pipeline_data)
 
 
 def _split_signals(signals:list[Signal]) -> tuple[list[Signal], list[Signal]]:

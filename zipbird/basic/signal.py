@@ -17,20 +17,27 @@ class Signal:
     # There are signals that only open a position when
     # the price reaches the limit price on next session.
     limit_price: float | None
+    stop_price: float | None
 
-    def __init__(self, stock, open_close:OpenClose, long_short:LongShort, limit_price:float=None):
+    def __init__(self,
+                 stock,
+                 open_close:OpenClose,
+                 long_short:LongShort,
+                 limit_price:float=None,
+                 stop_price:float=None):
         self.stock = stock
         self.open_close = open_close
         self.long_short = long_short
         self.limit_price = limit_price
+        self.stop_price = stop_price
 
     @staticmethod
     def make_close_long(stock):
         return Signal(stock, OpenClose.Close, LongShort.Long)
 
     @staticmethod
-    def make_open_long(stock, limit_price=None):
-        return Signal(stock, OpenClose.Open, LongShort.Long, limit_price)
+    def make_open_long(stock, limit_price=None, stop_price=None):
+        return Signal(stock, OpenClose.Open, LongShort.Long, limit_price, stop_price)
     
     @staticmethod
     def make_adjust_long(stock):

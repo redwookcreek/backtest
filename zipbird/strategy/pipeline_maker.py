@@ -181,4 +181,16 @@ class PipelineMaker:
                     factor=NorgateDataIndexConstituent('S&P 500')
                 )
         raise ValueError(f'Unhanlded index consititue {index_name}')
+    
+    def add_sma_cross_times(self, fast, slow, master, period):
+        return self._maybe_add_column(
+            name=col_name.sma_cross_times(fast, slow, master, period),
+            factor= factor_utils.MACrossoverCountFactor(
+                inputs=[USEquityPricing.close],
+                window_length=period + slow,
+                short_ma_len=fast,
+                long_ma_len=slow,
+                master_ma_len=master,
+                check_period=period,
+                mask=self.universe))
         

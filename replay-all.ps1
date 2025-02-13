@@ -43,3 +43,8 @@
   python.exe .\zipbird\replay_runner.py -s 1995-01-01 -e 2023-12-31 -b norgatedata-all-us -l s26 `
  --replay_strategies s26_6day_surge_short `
  --replay_weights 1 -d 1 > logs/r26
+
+ Write-Host 'replay s25 and s26'
+  python.exe .\zipbird\replay_runner.py -s 1995-01-01 -e 2023-12-31 -b norgatedata-all-us -l s26 `
+ --replay_strategies s25_adx_mr_long s26_6day_surge_short `
+ --replay_weights 1 1 -d 1 > logs/r256

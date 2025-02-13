@@ -49,3 +49,6 @@ def dollar_volume_rank(period):
 
 def index(index_name):
     return f'i_{index_name.value}'
+
+def sma_cross_times(fast, slow, master, period):
+    return f'sma_x_{fast}_{slow}_{master}_{period}'

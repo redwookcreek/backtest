@@ -25,7 +25,8 @@ class ATRPositionSizer(PositionSizer):
                             signal.open_close,
                             signal.long_short,
                             amount=amount,
-                            limit_price=signal.limit_price)
+                            limit_price=signal.limit_price,
+                            stop_price=signal.stop_price)
             
             # Attach stop loss
             order.add_stop(StopOrder(
@@ -43,8 +44,8 @@ class ATRPositionSizer(PositionSizer):
         return pipeline_data[atr_name][stock]
     
     def _get_stop_loss_diff(self, stock:Equity, pipeline_data:pd.DataFrame):
-        atr = self._get_atr(stock, pipeline_data)    
-        if np.isnan(atr):
+        atr = self._get_atr(stock, pipeline_data)
+        if np.isnan(atr) or atr == 0:
             # if no atr, assume 50% risk
             return pipeline_data['close'][stock] * 0.5
         else:

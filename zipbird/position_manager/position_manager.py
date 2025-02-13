@@ -42,6 +42,11 @@ class PendingOrder:
                 self.order.stock, 
                 sign * self.order.amount,
                 style=zipline_execution.LimitOrder(self.order.limit_price))
+        elif self.order.stop_price:
+            self.zipline_order_id = order_api.order(
+                self.order.stock, 
+                sign * self.order.amount,
+                style=zipline_execution.StopOrder(self.order.stop_price))
         elif is_stop_order and self.order.stop:
             self.zipline_order_id = order_api.order(
                 self.order.stock, sign * self.order.amount,
@@ -133,7 +138,8 @@ class PositionManager:
             pending_order = self.pending_orders.pop(order.id)
             self.debug_logger.debug_print(
                 5, 
-                'Pending order filled %s %d: pending order id %s' % (asset, amount, order.id))
+                'Pending order filled %s %d: pending order id %s, orginal_id %s' % (
+                    asset, amount, order.id, pending_order.orginal_order_id))
             if pending_order.order.open_close == OpenClose.Close:
                 self.managed_orders.pop(pending_order.orginal_order_id)
                 # add order for replay
@@ -162,15 +168,15 @@ class PositionManager:
 
     def do_maintenance(self, today:datetime.date, positions:Positions, data:pd.DataFrame):
         """Runs maintenance before each trading session"""
+        self._closed_order_ids = []
         self.print_position_status()
         for managed_order in self.managed_orders.values():
             managed_order.inc_bar_count()
         self._verify_managed_orders(today, positions)
         self._cancel_pending_orders(today, positions)
         self._adjust_stop_orders(positions, data)
-        closed_order_ids = self._close_out_positions(positions, data)
-        self._send_out_stop_orders(closed_order_ids)
-        self._close_replay_orders_for_auto_close_positions(today, data)
+        self._closed_order_ids = self._close_out_positions(positions, data)
+        self.debug_logger.debug_print(3, 'Closed order ids: %s' % self._closed_order_ids)
 
     def _get_expired_assets(self, today:datetime.date, asset_list:list[Equity]):
         return [asset
@@ -247,17 +253,20 @@ class PositionManager:
             f'Sent out order {pending_order.zipline_order_id}: {pending_order.order}'
         )
 
-    def send_orders(self, orders:list[Order]):
+    def send_orders(self, orders:list[Order], today:datetime.date, data:pd.DataFrame):
         for order in orders:
             if order.open_close == OpenClose.Close:
                 # copy over managed order's uuid
                 for org_order_id, managed_order in self.managed_orders.items():
                     if managed_order.stock == order.stock:                    
                         order.uuid = managed_order.uuid
+                        self._closed_order_ids.append(org_order_id)
                         self._make_and_send_pending_order(
                             order, is_stop_order=False, orginal_order_id=org_order_id)
             else:
                 self._make_and_send_pending_order(order, is_stop_order=False)
+        self._send_out_stop_orders(self._closed_order_ids)
+        self._close_replay_orders_for_auto_close_positions(today, data)
 
     def _cancel_pending_orders(self, today:datetime.date, positions:Positions):
         all_open_orders = sum(self.order_api.get_open_orders().values(), [])

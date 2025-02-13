@@ -211,3 +211,51 @@ class SMATrend(CustomFactor):
        out[:] = 0  # Default no change
        out[trending_up] = 1  # Trending up
        out[trending_down] = -1  # Trending down
+
+class MACrossoverCountFactor(CustomFactor):
+    """
+    Counts the number of times two moving averages cross over 
+    (either up or down) within the specified window length.
+    
+    Parameters:
+    - window_length: Number of days to look back, this is used to fetch data
+    - short_ma_length: Length of the shorter moving average
+    - long_ma_length: Length of the longer moving average
+    - master_ma_length: if set, 
+    - check_period: number of days to look back for cross overs
+    """
+    inputs = [USEquityPricing.close]
+    params = ('short_ma_len', 'long_ma_len', 'master_ma_len', 'check_period')    
+    
+    def compute(self, today, assets, out, closes, short_ma_len, long_ma_len, master_ma_len, check_period):
+        print(f'closes: {closes.shape}')
+        print(closes)
+        print(f'assets: {assets}')
+        # Efficient moving average calculation using cumulative sum
+        def moving_average(x, w):
+            cumsum = np.cumsum(x, axis=0)
+            return (cumsum[w:] - cumsum[:-w]) / w
+        
+        # Compute short and long moving averages
+        ma_short = np.zeros_like(closes)
+        ma_long = np.zeros_like(closes)
+        ma_master = np.zeros_like(closes)
+        
+        # Pad the arrays to ensure we can calculate full moving averages
+        ma_short[short_ma_len:] = moving_average(closes, short_ma_len)
+        ma_long[long_ma_len:] = moving_average(closes, long_ma_len)
+        ma_master[master_ma_len:] = moving_average(closes, master_ma_len)
+        # Initialize crossover count
+        crossover_count = np.zeros(assets.shape[0])
+        all_above_master = np.ones(assets.shape[0], dtype=bool)
+        
+        # Detect crossovers
+        for i in range(check_period, closes.shape[0]):
+            cross_below = (ma_short[i-1] >= ma_long[i-1]) & (ma_short[i] < ma_long[i])
+            cross_above = (ma_short[i-1] <= ma_long[i-1]) & (ma_short[i] > ma_long[i])
+            crossovers = cross_below | cross_above
+            crossover_count += crossovers.astype(int)
+            
+            all_above_master &= ((ma_short[i] > ma_master[i]) & (ma_long[i] > ma_master[i]))
+        # Set output: crossover count if above master, otherwise -1
+        out[:] = np.where(all_above_master, crossover_count, -1)

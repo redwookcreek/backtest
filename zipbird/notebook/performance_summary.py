@@ -198,7 +198,15 @@ def pair_round_trips(df):
     return pd.DataFrame(round_trips).sort_values(by='close_date')
 
 
-def get_ployly_fig(round_trip_row):
+def get_ployly_fig(
+        ticker, 
+        start_date,
+        end_date,
+        is_long,
+        trade_days,
+        open_price,
+        close_price,
+        profit_percent):
     """Plot a OHLC chart for the ticker
     
     draw a up/down arrow at start_date, end_date
@@ -217,13 +225,9 @@ fig.show()
 !C:\\Windows\\SysWOW64\\cscript.exe \\
   C:\\Users\liu_w\\OneDrive\\Documents\\zipline\\system-test\\script\\amibroker.js \\
       "$ticker" $start $end
-    """
-    ticker = round_trip_row['sid'].symbol if 'sid' in round_trip_row else round_trip_row['stock'].symbol
-    start_date = round_trip_row['open_date']
-    end_date = round_trip_row['close_date']
-    
-    # draw extra 40 days before and after the start/end date
-    MARGIN = timedelta(days=40)
+    """    
+    # draw extra 60 days before and after the start/end date
+    MARGIN = timedelta(days=60)
     DATE_FORMAT = '%Y-%m-%d'
     display_start = (start_date - MARGIN).strftime(DATE_FORMAT)
     display_end = (end_date + MARGIN).strftime(DATE_FORMAT)
@@ -240,7 +244,6 @@ fig.show()
     # find y position to plot the open/close point
     # plot above high for sell, plot below low for buy
     open_y = close_y = None
-    is_long = round_trip_row['amount'] > 0
 
     for p in pricedata:        
         if pd.to_datetime(p[0]).strftime(DATE_FORMAT) == start_date_str:
@@ -257,8 +260,8 @@ fig.show()
         ))
     fig.update_layout(
         title=dict(
-            text=(f'{ticker} {start_date_str} - {end_date_str} ({round_trip_row["trade_day"]} days) '
-                  f'({round_trip_row["profit_percent"]*100:.2f}%)'),
+            text=(f'{ticker} {start_date_str} - {end_date_str} ({trade_days} days) '
+                  f'({profit_percent * 100:.2f}%)'),
             font=dict(size=20),
             automargin=True,
             yref='paper',
@@ -269,7 +272,7 @@ fig.show()
     fig.add_annotation(
         x=start_date_str,
         y=open_y,
-        text='{:.2f}'.format(round_trip_row['open_price']),
+        text='{:.2f}'.format(open_price),
         showarrow=True,
         valign='bottom',
         ay=20 if is_long else -20,
@@ -278,8 +281,8 @@ fig.show()
         x=end_date_str,
         y=close_y,
         text='{:.2f} ({:.2f}%)'.format(
-            round_trip_row['close_price'],
-            round_trip_row['profit_percent'] * 100),
+            close_price,
+            profit_percent * 100),
         showarrow=True,
         ay=-20 if is_long else 20,
         arrowhead=1)
@@ -510,6 +513,7 @@ def win_rate_stats(trades:OrderCollector):
         'win_count': [df['is_win'].sum()],
         'loss_count': [df['is_loss'].sum()],
         'big_loss_count': [df['is_big_loss'].sum()],
+        'big_win_count': [df['is_big_win'].sum()],
         'avg_win': [df[df['profit_pct'] > 0]['profit_pct'].mean() * 100],
         'avg_loss': [df[df['profit_pct'] < 0]['profit_pct'].mean() * 100],
         'win_rate': [df['is_win'].sum() / df['symbol'].count() * 100],

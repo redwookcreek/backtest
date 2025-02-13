@@ -16,20 +16,35 @@ class Order:
     # the price reaches the limit price on next session.
     limit_price: float | None
     stop: StopOrder | None
-    
-    def __init__(self, stock, open_close:OpenClose, long_short:LongShort, limit_price:float=None):
+    # some open orders are triggered by a stop
+    # for buy, triggered if price cross above stop_price
+    # for sell, triggered if price cross below stop_price
+    stop_price: float | None
+    def __init__(self, 
+                 stock,
+                 open_close:OpenClose,
+                 long_short:LongShort, 
+                 limit_price:float=None,
+                 stop:StopOrder=None,
+                 stop_price:float=None):
         self.uuid = uuid.uuid4()
         self.stock = stock
         self.open_close = open_close
         self.long_short = long_short
         self.limit_price = limit_price
-        self.stop = None
+        self.stop = stop
+        self.stop_price = stop_price
         # self.stop already has a bar_count, but not all orders have stop
         self.bar_count = 0
 
     def copy(self):
-        order = Order(self.stock, open_close=self.open_close, long_short=self.long_short,limit_price=self.limit_price)
-        order.stop = self.stop
+        order = Order(
+            self.stock,
+            open_close=self.open_close,
+            long_short=self.long_short,
+            limit_price=self.limit_price,
+            stop=self.stop,
+            stop_price=self.stop_price)
         return order
 
     def get_sign(self):
@@ -53,7 +68,9 @@ class Order:
             self.stock, 
             open_close,
             self.long_short,
-            self.limit_price)
+            self.limit_price,
+            self.stop,
+            self.stop_price)
         order.bar_count = self.bar_count
         order.uuid = self.uuid
         if keep_stop:
@@ -77,6 +94,7 @@ class Order:
                 self.open_close == value.open_close and
                 self.long_short == value.long_short and
                 self.limit_price == value.limit_price and
+                self.stop_price == value.stop_price and
                 self.stop == value.stop)
 
     def _order_type_str(self):
@@ -106,7 +124,13 @@ class Order:
 class ShareOrder(Order):
     amount: int
 
-    def __init__(self, stock, open_close:OpenClose, long_short:LongShort, limit_price:float=None, amount:int=None):
+    def __init__(self,
+                 stock,
+                 open_close:OpenClose,
+                 long_short:LongShort,
+                 limit_price:float=None,
+                 stop_price:float=None,
+                 amount:int=None):
         super().__init__(stock, open_close, long_short, limit_price)
         self.amount = amount
 
@@ -116,6 +140,7 @@ class ShareOrder(Order):
             open_close=self.open_close,
             long_short=self.long_short,
             limit_price=self.limit_price,
+            stop_price=self.stop_price,
             amount=self.amount)
         order.stop = self.stop.copy()
         return order
@@ -140,12 +165,24 @@ class ShareOrder(Order):
         return ShareOrder(stock, OpenClose.Close, LongShort.Short, limit_price, amount)
 
     @staticmethod
-    def make_open_long(stock, amount:int=None, limit_price:float=None):
-        return ShareOrder(stock, OpenClose.Open, LongShort.Long, limit_price, amount)
+    def make_open_long(stock, amount:int=None, limit_price:float=None, stop_price:float=None):
+        return ShareOrder(
+            stock,
+            OpenClose.Open, 
+            LongShort.Long, 
+            limit_price=limit_price, 
+            amount=amount, 
+            stop_price=stop_price)
     
     @staticmethod
-    def make_open_short(stock, amount:int=None, limit_price:float=None):
-        return ShareOrder(stock, OpenClose.Open, LongShort.Short, limit_price, amount)
+    def make_open_short(stock, amount:int=None, limit_price:float=None, stop_price:float=None):
+        return ShareOrder(
+            stock,
+            OpenClose.Open, 
+            LongShort.Short, 
+            limit_price=limit_price, 
+            amount=amount, 
+            stop_price=stop_price)
     
     def __str__(self):
         return f'ShareOrder: {super().__str__()}, {self.amount or "---"}'

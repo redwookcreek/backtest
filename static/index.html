@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zipline Backtest</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Zipline Backtest Dashboard</h1>
+        <div id="message"></div>
+        <div class="controls">
+            <button onclick="fetchData()">Test API Connection</button>
+        </div>
+    </div>
+
+    <script>
+        async function fetchData() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                document.getElementById('message').textContent = data.message;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('message').textContent = 'Error connecting to server';
+            }
+        }
+    </script>
+</body>
+</html>

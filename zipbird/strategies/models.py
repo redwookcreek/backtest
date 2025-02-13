@@ -1,3 +1,4 @@
+from zipbird.position_manager.no_order_position_sizer import NoOrderPositionSizer
 from zipbird.position_manager.rotation_position_sizer import RotationPositionSizer
 from zipbird.position_manager.atr_position_sizer import ATRPositionSizer
 from zipbird.position_manager.split_target_position_sizer import SplitTargetPositionSizer
@@ -15,6 +16,8 @@ from zipbird.strategies.s25_adx_mr_long import S25ADXLongMR
 from zipbird.strategies.s26_6day_surge_short import S26SixDaySurgeShort
 from zipbird.strategies.s31_trend_50 import S31Trend50
 from zipbird.strategies.s32_200_cross import S32Cross200MA
+from zipbird.strategies.s33_3ma import S33MAConsolidation
+from zipbird.strategies.s34_mom import S34MOM
 
 PARAMS_S1_WEEKLY_SP500 = dict(
     market_filter_sma_period=200,
@@ -345,6 +348,50 @@ SE_S32_200_CROSS_SPLIT = StrategyExecutor(
     position_sizer=SplitTargetPositionSizer(PARAMS_S32_SPLIT),
 )
 
+PARAMS_S33_3MA = dict(
+    roc_period=200,
+    slow_ma=20,
+    fast_ma=10,
+    master_ma=50,
+    check_period=50,
+
+    atr_period=10,
+
+    max_positions=10,
+    fraction_risk=0.02,  # 2% risk per position
+    stop_loss_atr_multiple=5,
+    max_equity_per_position = 0.1,  # max 10% equity per position
+)
+
+SE_S33_3MA = StrategyExecutor(
+    strategy=S33MAConsolidation('s33-3ma', PARAMS_S33_3MA),
+    position_sizer=ATRPositionSizer(PARAMS_S33_3MA)
+)
+
+
+PARAMS_S34_MOM = dict(
+    roc_period=400,
+    adx_period=14,
+    highest_high_period=100,
+    atr_period=10,
+
+    max_positions=10,
+    fraction_risk=0.02,  # 2% risk per position
+    stop_loss_atr_multiple=3,
+    trailing_stop_percent=.20,
+    max_equity_per_position = 0.1,  # max 10% equity per position
+    open_stop_percent = 0.01, # open with a stop order 1% higher than last close
+)
+SE_S34_3MA = StrategyExecutor(
+    strategy=S34MOM('s34-mom', PARAMS_S34_MOM),
+    position_sizer=ATRPositionSizer(PARAMS_S34_MOM)
+)
+
+
+SE_SIGNAL_ONLY = StrategyExecutor(
+    strategy=S23LongMR(strategy_name='s23', params=PARAMS_S23_LONG_MR),
+    position_sizer=NoOrderPositionSizer())
+
 STRATEGY_FUNC_MAP = {
     's1_sp500': SE_S1_WEEKLY_ROTATION_SP500,
     's1_sp500_m': SE_S1_MONTHLY_ROTATION_SP500,
@@ -362,5 +409,8 @@ STRATEGY_FUNC_MAP = {
     's31_trend_50_split': SE_S31_TREND_50_SPLIT,
     's32_200_cross': SE_S32_200_CROSS,
     's32_200_cross_split': SE_S32_200_CROSS_SPLIT,
+    's33_3ma': SE_S33_3MA,
+    's34_mom': SE_S34_3MA,
+    'signal_only': SE_SIGNAL_ONLY,
     'ind_loader': IndicatorLoader()
 }
