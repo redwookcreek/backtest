@@ -174,6 +174,7 @@ PARAMS_S22_SHORT_RSI_THRUST = dict(
     stop_loss_atr_multiple=3,
     stop_loss_days=4,
     price_target_percent=0.04,
+    #price_target_atr_multiple=0.7,
 )
 
 SE_S22_SHORT_RSI_THRUST = StrategyExecutor(
