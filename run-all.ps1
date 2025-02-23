@@ -19,7 +19,7 @@ $strategies = @('s1_sp500',
 for ($i = 0; $i -lt $strategies.Length; $i++) {
     $strategy = $strategies[$i]  # Store the current strategy in a variable
     Write-Host "Attempting to run $strategy" 
-    python .\zipbird\runner.py $strategies[$i] -s $StartDay -e $EndDay -b norgatedata-sp500 -d 0  > logs/s-$strategy
+    python .\zipbird\runner.py $strategies[$i] -s $StartDay -e $EndDay -b norgatedata-all-us -d 0  > logs/s-$strategy
 }
 
 #zipline ingest -b norgatedata-sp500 ; zipline ingest -b norgatedata-all-us
