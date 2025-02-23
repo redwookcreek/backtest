@@ -73,18 +73,18 @@ def run():
             strategy,
             args.label
         )
-
-        performance_summary.output_performance(
-            prefix=args.strategy_name,
-            start_date=start_time,
-            end_date=end_time,
-            strategy_name=strategy.strategy.get_name(),
-            strategy_params={},
-            perf=perf,
-            label=args.label,
-            bundle=args.bundle,
-            replay_orders=strategy.replay_order_container,
-        )
+        if sum(perf['capital_used']) != 0:
+            performance_summary.output_performance(
+                prefix=args.strategy_name,
+                start_date=start_time,
+                end_date=end_time,
+                strategy_name=strategy.strategy.get_name(),
+                strategy_params={},
+                perf=perf,
+                label=args.label,
+                bundle=args.bundle,
+                replay_orders=strategy.replay_order_container,
+            )
 
     elif action == 'perf':
         replay_filename = utils.replay_filename(
