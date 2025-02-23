@@ -101,7 +101,7 @@ SE_S2_MR_LONG = StrategyExecutor(
         position_sizer=ATRPositionSizer(PARAMS_S2_MR_LONG))
 
 PARAMS_S3_MR_SHORT = dict(
-    min_price=5.0,
+    min_price=10.0,
     dollar_volume_rank_window=100,
     dollar_volume_rank_max=1000,
     
@@ -154,7 +154,7 @@ SE_S21_LONG_MOM = StrategyExecutor(
 
 
 PARAMS_S22_SHORT_RSI_THRUST = dict(
-    min_price=5.0,
+    min_price=10.0,
     dollar_volume_rank_window=100,
     dollar_volume_rank_max=1000,
     
@@ -264,7 +264,7 @@ SE_S25_ADX_MR_LONG = StrategyExecutor(
 )
 
 PARAMS_S26_6DAY_SURGE_SHORT = dict(
-    min_price=5.0,
+    min_price=10.0,
     dollar_volume_rank_window=100,
     dollar_volume_rank_max=1000,
     
@@ -390,7 +390,7 @@ SE_S34_3MA = StrategyExecutor(
 
 
 SE_SIGNAL_ONLY = StrategyExecutor(
-    strategy=S23LongMR(strategy_name='s23', params=PARAMS_S23_LONG_MR),
+    strategy=S25ADXLongMR(strategy_name='s25', params=PARAMS_S25_ADX_LONG_MR),
     position_sizer=NoOrderPositionSizer())
 
 STRATEGY_FUNC_MAP = {
