@@ -7,7 +7,6 @@ from zipbird.basic.types import LongShort, StopOrderStatus
 # Expected data frame column names
 # ========================
 COL_CLOSE = 'close'
-COL_ATR = 'atr'
 
 class MismatchLongShortError(Exception):
     """Mismatch long short error"""
@@ -163,14 +162,19 @@ class PercentTrailingStop(TrailingStop):
 
 class ATRTrailingStop(TrailingStop):
 
-    def __init__(self, long_or_short: LongShort, enter_price: float, trailing_atr_multiple: float):
+    def __init__(self,
+                 long_or_short: LongShort, 
+                 enter_price: float,
+                 atr_col_name: str,
+                 trailing_atr_multiple: float):
         super().__init__(long_or_short, enter_price)
         self.trailing_atr_multiple = trailing_atr_multiple
+        self.atr_col_name = atr_col_name
 
     def update_stop_price(self, data) -> None:
         super().update_stop_price(data)
         last_close = data[COL_CLOSE]
-        atr = data[COL_ATR]
+        atr = data[self.atr_col_name]
         diff_price = self.trailing_atr_multiple * atr
         if self.long_or_short == LongShort.Long:
             self.stop_price = max(self.stop_price or 0,

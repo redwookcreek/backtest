@@ -3,7 +3,7 @@ import numpy as np
 
 from zipbird.basic.order import Order, ShareOrder
 from zipbird.basic.signal import Signal
-from zipbird.basic.stop import FixStop, PercentProfitTarget, PercentTrailingStop, StopOrder, FixProfitTarget
+from zipbird.basic.stop import FixStop, PercentProfitTarget, PercentTrailingStop, StopOrder, FixProfitTarget, ATRTrailingStop
 from zipbird.basic.types import Equity, Portfolio
 from zipbird.strategy import pipeline_column_names as colume_names
 from zipbird.position_manager.position_sizer import PositionSizer
@@ -72,11 +72,22 @@ class ATRPositionSizer(PositionSizer):
         
     def _get_tailing_stop(self, signal, last_close:float):
         trailing_percent = self.params.get('trailing_stop_percent', 0)
+        trailing_atr_multiple = self.params.get('trailing_atr_multiple', 0)
         if trailing_percent:
             return PercentTrailingStop(
                 signal.long_short,
                 # last close is not exactly entering price, but this is close enough
                 enter_price=last_close,
                 trailing_percent=trailing_percent)
+        elif trailing_atr_multiple:
+            atr_col_name = colume_names.atr_name(
+                self.params['atr_period']
+            )
+            return ATRTrailingStop(
+                signal.long_short,
+                enter_price=last_close,
+                trailing_atr_multiple=trailing_atr_multiple,
+                atr_col_name=atr_col_name
+            )
         else:
             return None
