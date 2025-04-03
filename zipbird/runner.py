@@ -34,7 +34,7 @@ def run():
     args = parser.parse_args()
 
     if args.strategy_name not in se_models.STRATEGY_FUNC_MAP:
-        print('Strategy name {} unknown, choose from: {}'.format(
+        print('Strategy name {} unknown, choose from: {}'.format( 
             args.strategy_name, se_models.STRATEGY_FUNC_MAP.keys()))
         return
     
@@ -79,7 +79,7 @@ def run():
                 start_date=start_time,
                 end_date=end_time,
                 strategy_name=strategy.strategy.get_name(),
-                strategy_params={},
+                strategy_params=strategy.strategy.get_params(),
                 perf=perf,
                 label=args.label,
                 bundle=args.bundle,
