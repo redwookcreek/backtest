@@ -39,7 +39,6 @@ class StrategyExecutor:
         This is only used by pipeline saver
         """
         self.strategy.prepare_pipeline_columns(pipeline_maker)
-        pipeline_maker.add_dollar_volume_rank(100)
 
     def make_pipeline(self):
         """Creates pipeline
@@ -72,7 +71,7 @@ class StrategyExecutor:
             signal_str = ', '.join([f'{s.stock.symbol}: {s.limit_price}' for s in signals])
             self.debug_logger.debug_print(
                 2, 
-                f'Generated signals: {len(signals)}, {signal_str}')
+                f'{portfolio.today} Generated signals: {len(signals)}, {signal_str}')
             with pd.option_context('display.max_columns', None, 'display.width', None):
                 self.debug_logger.debug_print(
                     2,
@@ -149,4 +148,3 @@ def _create_closing_orders(positions:Positions,
         else:
             raise CloseStockNotInPortfolioException(f'{stock} not in portfolio')
     return orders
-

@@ -18,6 +18,7 @@ from zipbird.strategies.s31_trend_50 import S31Trend50
 from zipbird.strategies.s32_200_cross import S32Cross200MA
 from zipbird.strategies.s33_3ma import S33MAConsolidation
 from zipbird.strategies.s34_mom import S34MOM
+from zipbird.strategies.s36_one_day_mom_surge import S36OneDayMOMSurge
 
 PARAMS_S1_WEEKLY_SP500 = dict(
     market_filter_sma_period=200,
@@ -371,6 +372,37 @@ SE_S33_3MA = StrategyExecutor(
 
 
 PARAMS_S34_MOM = dict(
+    min_price=1.0,
+    dollar_volume_rank_window=100,
+    dollar_volume_rank_max=1000,
+
+    roc_period=400,
+    adx_period=14,
+    highest_high_period=25,
+    cross_high_close_percent=0.05,
+    green_bar_limit=0.2,
+    atr_period=10,
+
+    max_positions=10,
+    fraction_risk=0.01,  # 2% risk per position
+    stop_loss_atr_multiple=3,
+    #trailing_atr_multiple=2,
+    #stop_loss_days=20,
+    trailing_stop_percent=0.2,
+    max_equity_per_position = 0.1,  # max 10% equity per position
+    #open_stop_percent = 0.01, # open with a stop order 1% higher than last close
+)
+SE_S34_3MA = StrategyExecutor(
+    strategy=S34MOM('s34-mom', PARAMS_S34_MOM),
+    position_sizer=ATRPositionSizer(PARAMS_S34_MOM)
+)
+
+PARAMS_S36_ONE_DAY_MOM_SURGE = dict(
+    min_price=1.0,
+    dollar_volume_rank_window=100,
+    dollar_volume_rank_max=1000,
+
+    surge_percent=0.04,
     roc_period=400,
     adx_period=14,
     highest_high_period=100,
@@ -382,15 +414,18 @@ PARAMS_S34_MOM = dict(
     trailing_stop_percent=.20,
     max_equity_per_position = 0.1,  # max 10% equity per position
     open_stop_percent = 0.01, # open with a stop order 1% higher than last close
+    open_position_factor = 1.,
+    open_order_percent = 0.05,
 )
-SE_S34_3MA = StrategyExecutor(
-    strategy=S34MOM('s34-mom', PARAMS_S34_MOM),
-    position_sizer=ATRPositionSizer(PARAMS_S34_MOM)
+
+SE_S36_ONE_DAY_MOM_SURGE = StrategyExecutor(
+    strategy=S36OneDayMOMSurge('s36-one-day-mom-surge', PARAMS_S36_ONE_DAY_MOM_SURGE),
+    position_sizer=ATRPositionSizer(PARAMS_S36_ONE_DAY_MOM_SURGE)
 )
 
 
 SE_SIGNAL_ONLY = StrategyExecutor(
-    strategy=S25ADXLongMR(strategy_name='s25', params=PARAMS_S25_ADX_LONG_MR),
+    strategy=S26SixDaySurgeShort(strategy_name='s26', params=PARAMS_S26_6DAY_SURGE_SHORT),
     position_sizer=NoOrderPositionSizer())
 
 STRATEGY_FUNC_MAP = {
@@ -412,6 +447,7 @@ STRATEGY_FUNC_MAP = {
     's32_200_cross_split': SE_S32_200_CROSS_SPLIT,
     's33_3ma': SE_S33_3MA,
     's34_mom': SE_S34_3MA,
+    's36_one_day_mom_surge': SE_S36_ONE_DAY_MOM_SURGE,
     'signal_only': SE_SIGNAL_ONLY,
     'ind_loader': IndicatorLoader()
 }

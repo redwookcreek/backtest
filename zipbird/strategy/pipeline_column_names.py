@@ -38,6 +38,12 @@ def consecutive_up_name(period):
 def max_in_window(period):
     return f'{period}_high'
 
+def cross_last_high(period):
+    return f'X_{period}_high'
+
+def cross_last_high_with_large_green_bar(period, close_percent, green_bar_limit):
+    return f'STRG_X_{period}_high_{close_percent:.2f}_{green_bar_limit:.2f}'
+
 def sma_cross(period):
     return f'sma_cross_{period}'
 
@@ -52,3 +58,6 @@ def index(index_name):
 
 def sma_cross_times(fast, slow, master, period):
     return f'sma_x_{fast}_{slow}_{master}_{period}'
+
+def one_day_mom_surge(surge_percent):
+    return f'1d_mom_surge_{surge_percent}'

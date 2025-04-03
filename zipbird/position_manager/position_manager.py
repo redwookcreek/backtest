@@ -140,6 +140,10 @@ class PositionManager:
                 5, 
                 'Pending order filled %s %d: pending order id %s, orginal_id %s' % (
                     asset, amount, order.id, pending_order.orginal_order_id))
+            self.debug_logger.debug_print(
+                1,
+                f'Fill {amount} {asset.symbol}@{price:.2f}'
+            )
             if pending_order.order.open_close == OpenClose.Close:
                 self.managed_orders.pop(pending_order.orginal_order_id)
                 # add order for replay

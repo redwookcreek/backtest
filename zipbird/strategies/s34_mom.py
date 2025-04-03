@@ -16,48 +16,33 @@ import pandas as pd
 from zipbird.strategy.pipeline_maker import PipelineMaker
 from zipbird.strategy.strategy_executor import BaseStrategy, Signal
 from zipbird.strategy import pipeline_column_names as col_name
-from zipbird.utils import factor_utils
 
 from zipline.protocol import Positions
 
 class S34MOM(BaseStrategy):
     
-    def make_pipeline(self, pipeline_maker:PipelineMaker):
-        # Set up universe of top 1000 stocks by dollar volume
-        pipeline_maker.add_dollar_volume_rank_universe(
-            max_rank=1000, min_close=1, window_length=200)
-        
-        # Add our indicators
-        self.prepare_pipeline_columns(pipeline_maker)
-
     def prepare_pipeline_columns(self, pipeline_maker:PipelineMaker):
         """Create zipline pipeline with ADX and ROC indicators"""
         
         # Add technical indicators
-        pipeline_maker.add_adx(self.params['adx_period'])
+        adx = pipeline_maker.add_adx(self.params['adx_period'])
         pipeline_maker.add_roc(self.params['roc_period'])
         pipeline_maker.add_atr(self.params['atr_period'])
-        pipeline_maker.add_max_in_window(self.params['highest_high_period'])
-        
-    def filter_pipeline_data(self, pipeline_data:pd.DataFrame) -> pd.DataFrame:
-        """Filter stocks based on ADX and ROC thresholds"""
-        adx = col_name.adx_name(self.params['adx_period'])
-        high = col_name.max_in_window(self.params['highest_high_period'])
-
-        d = pipeline_data
-        # Filter for stocks with high ADX (strong trend) and positive ROC (upward momentum)
-        return d[(d[adx] > self.params['adx_threshold']) & 
-                (d['close'] >= d[high])]
+        crossed_high = pipeline_maker.add_cross_last_high_with_large_green_bar(
+            period=self.params['highest_high_period'],
+            close_percent=self.params['cross_high_close_percent'],
+            green_bar_limit=self.params['green_bar_limit']
+        )
+        return ((crossed_high >= 0) & (crossed_high < 1))
 
     def generate_signals(self,
                          positions:Positions,
                          pipeline_data:pd.DataFrame,
                          filtered_pipeline_data:pd.DataFrame) -> list[Signal]:
         """Generate trading signals based on our momentum strategy"""
-        
         if filtered_pipeline_data.empty:
             return []
-            
+
         # Combine ADX and ROC scores for ranking
         roc = col_name.roc_name(self.params['roc_period'])
         
@@ -69,6 +54,7 @@ class S34MOM(BaseStrategy):
                                      self.params['max_positions'])
         signals = []
         for stock in buy_list:
-            stop_price = filtered_pipeline_data.at[stock, 'close'] * (1 + self.params['open_stop_percent'])
-            signals.append(Signal.make_open_long(stock, stop_price=stop_price))
+            #stop_price = filtered_pipeline_data.at[stock, 'close'] * (1 + self.params['open_stop_percent'])
+            #signals.append(Signal.make_open_long(stock, stop_price=stop_price))
+            signals.append(Signal.make_open_long(stock))
         return signals

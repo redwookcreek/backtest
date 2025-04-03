@@ -53,5 +53,5 @@ class BaseStrategy:
                      open_position_factor=1):
         buy_list = buy_list[~buy_list.index.isin(positions.keys())]
         n_pos_to_open = max(0, (max_positions - len(positions)) * open_position_factor)
-        return buy_list.index.tolist()[:n_pos_to_open]
+        return buy_list.index.tolist()[:int(n_pos_to_open)]
 

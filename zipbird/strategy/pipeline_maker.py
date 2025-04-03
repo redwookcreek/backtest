@@ -101,7 +101,24 @@ class PipelineMaker:
             name=col_name.max_in_window(period),
             factor=factor_utils.MaxInWindowFactor(
                 window_length=period, mask=self.universe))
+
+    def add_cross_last_high(self, period):
+        return self._maybe_add_column(
+            name=col_name.cross_last_high(period),
+            factor=factor_utils.LastCrossedHighestHighFactor(
+                window_length=period+2, mask=self.universe))
     
+    def add_cross_last_high_with_large_green_bar(self, period, close_percent, green_bar_limit):
+        return self._maybe_add_column(
+            name=col_name.cross_last_high_with_large_green_bar(period, close_percent, green_bar_limit),
+            factor=factor_utils.LastCrossWithLargeGreenBar(
+                window_length=period + 2,
+                close_percent=close_percent,
+                green_bar_limit=green_bar_limit,
+                mask=self.universe
+
+            )
+        )
     def add_vol_percentile(self, period):
         return self._maybe_add_column(
             name=col_name.vol_percentile_name(period),
@@ -194,3 +211,9 @@ class PipelineMaker:
                 check_period=period,
                 mask=self.universe))
         
+    def add_one_day_mom_surge(self, surge_percent):
+        return self._maybe_add_column(
+            name=col_name.one_day_mom_surge(surge_percent),
+            factor=factor_utils.MomentumSurgeFactor(
+                surge_percent=surge_percent,
+                mask=self.universe))
