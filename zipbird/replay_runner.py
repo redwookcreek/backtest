@@ -31,6 +31,10 @@ def run():
     parser.add_argument('-b', '--bundle', default='quandl')
     parser.add_argument('-f', '--frequency', default='d')
     parser.add_argument('-l', '--label', default='')
+    parser.add_argument('--strategy_labels',
+                        nargs='+',
+                        type=str,
+                        help='List of labels to apply to each strategy')
     parser.add_argument('--replay_strategies', 
                         nargs='+',
                         type=str,
@@ -69,7 +73,8 @@ def run():
         timer_context=timer_context
     )
 
-    add_past_orders(replayer, strategy_names, start_time, end_time, '') #, args.label)
+    add_past_orders(replayer, strategy_names, start_time, end_time, args.strategy_labels)
+
     perf = run_internal(start_time,
                  end_time,
                  replayer,
@@ -83,9 +88,11 @@ def run():
             None,
             args.label)
     order_collector = OrderCollector('replay')
-    for orders in replayer.orders.values():
+    for order_date, orders in replayer.orders.items():
         for order in orders:
-            order_collector.add_round_trip(order)
+            if order.open_date == order_date:
+                order_collector.add_round_trip(order)
+
     output_performance(
         prefix='replay',
         start_date=start_time,
@@ -103,13 +110,13 @@ def add_past_orders(
         strategy_names: list[str],
         start_time: pd.Timestamp,
         end_time: pd.Timestamp,
-        label: str) -> list[ReplayOrder]:
-    for strategy_name in strategy_names:
-        with replayer.timer_context.timer('read files'):
-            filename = utils.replay_filename(
-                strategy_name, start_time, end_time, label)
+        labels: list[str]) -> list[ReplayOrder]:
+    for i, strategy_name in enumerate(strategy_names):
+        label = '' if not labels else labels[i]
+        filename = utils.replay_filename(
+            strategy_name, start_time, end_time, label)
         with replayer.timer_context.timer('load orders'):
-            replayer.load_orders(filename)
+            replayer.load_orders(i, filename)
 
 @timing
 def run_internal(start_time:pd.Timestamp,
