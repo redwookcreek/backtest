@@ -43,8 +43,10 @@ class ReplayStrategy:
         self.strategies = {}
         self.debug_logger = debug_logger
         self.timer_context = timer_context
+        i = 0
         for strategy, weight in zip(strategys, weights):
-            name = strategy.strategy.get_name()
+            name = f'{strategy.strategy.get_name()}_{i}'
+            i += 1
             self.strategy_weight[name] = weight
             self.strategies[name] = strategy
 
@@ -58,16 +60,16 @@ class ReplayStrategy:
                 with self.timer_context.timer('load symbols'):
                     order.asset = self.zipline_api.symbol(order.symbol)
     
-    def _load_one_file_from_csv(self, filename:str) -> list[ReplayOrder]:
+    def _load_one_file_from_csv(self, stg_no: int, filename:str) -> list[ReplayOrder]:
         result = []
         with open(filename) as f:
             for line in f:
-                order = ReplayOrder.from_csv(line)
+                order = ReplayOrder.from_csv(line, stg_no)
                 result.append(order)
         return result
     
-    def load_orders(self, filename:str) -> None:
-        for order in self._load_one_file_from_csv(filename):
+    def load_orders(self, stg_no: int, filename:str) -> None:
+        for order in self._load_one_file_from_csv(stg_no, filename):
             self.orders[order.open_date].append(order)
             if order.close_date:
                 self.orders[order.close_date].append(order)

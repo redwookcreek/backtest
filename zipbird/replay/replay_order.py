@@ -62,10 +62,10 @@ class ReplayOrder:
                         ])
 
     @classmethod
-    def from_csv(cls, line):
+    def from_csv(cls, line, strategy_number):
         parts = line.strip().split(',')
         order = ReplayOrder()
-        order.strategy_name = parts[0]
+        order.strategy_name = f'{parts[0]}_{strategy_number}'
         order.symbol = parts[1]
         order.long_short = LongShort.Long if parts[2] == '1' else LongShort.Short
         order.open_date = to_date(parts[3])
@@ -89,7 +89,7 @@ class ReplayOrder:
             utils.compare_object(self.close_price, value.close_price)
             )
     def __str__(self)-> str:
-        return f'ReplayOrder({self.symbol},{self.long_short},{self.open_date},{self.open_price},{self.close_date},{self.close_price},{self.replay_shares})'
+        return f'ReplayOrder({self.symbol},{self.long_short},{self.open_date},{self.open_price},{self.close_date},{self.close_price})'
 
 def to_date(date_str: str) -> date:
     if not date_str:
