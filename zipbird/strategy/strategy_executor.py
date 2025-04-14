@@ -67,17 +67,6 @@ class StrategyExecutor:
             pipeline_data=pipeline_data,
             filtered_pipeline_data=filtered_pipeline_data)
         
-        if len(signals) > 0:
-            signal_str = ', '.join([f'{s.stock.symbol}: {s.limit_price}' for s in signals])
-            self.debug_logger.debug_print(
-                2, 
-                f'{portfolio.today} Generated signals: {len(signals)}, {signal_str}')
-            with pd.option_context('display.max_columns', None, 'display.width', None):
-                self.debug_logger.debug_print(
-                    2,
-                    filtered_pipeline_data.loc[[s.stock for s in signals]]
-                )
-        
         to_open, to_close = _split_signals(signals)
         self.debug_logger.debug_print(5, f'To open signals: {len(to_open)}, {to_open}')
         self.debug_logger.debug_print(5, f'To close signals: {len(to_close)}, {to_close}')

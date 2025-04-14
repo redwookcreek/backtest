@@ -168,12 +168,7 @@ class MomentumSurgeFactor(CustomFactor):
         # Combine conditions
         out[:] = surge_condition & white_candle & close_near_high
 
-class ConsolidationPeriod(CustomFactor):
-    """The stock was in consolidation in last N days
-    
-    The basic idea is the stock had no large up and downs in last N days
-    
-    """
+
 class MaxInWindowFactor(CustomFactor):
     """Max price in last N days"""
     inputs = (USEquityPricing.close,)
@@ -400,9 +395,6 @@ class MACrossoverCountFactor(CustomFactor):
     params = ('short_ma_len', 'long_ma_len', 'master_ma_len', 'check_period')    
     
     def compute(self, today, assets, out, closes, short_ma_len, long_ma_len, master_ma_len, check_period):
-        print(f'closes: {closes.shape}')
-        print(closes)
-        print(f'assets: {assets}')
         # Efficient moving average calculation using cumulative sum
         def moving_average(x, w):
             cumsum = np.cumsum(x, axis=0)
@@ -431,3 +423,23 @@ class MACrossoverCountFactor(CustomFactor):
             all_above_master &= ((ma_short[i] > ma_master[i]) & (ma_long[i] > ma_master[i]))
         # Set output: crossover count if above master, otherwise -1
         out[:] = np.where(all_above_master, crossover_count, -1)
+
+class CloseAboveConsecutive(CustomFactor):
+    """
+    1 if close above the `threshold` for `window_length` days or more consecutively
+    """
+    inputs = [USEquityPricing.close]
+    window_length = 10
+    params = ('threshold',)
+
+    def compute(self, today, assets, out, close, threshold):
+        # Check if close price is above threshold for each asset on each day
+        print('today', today)
+        print(close)
+        above_threshold = close > threshold
+        # Use np.all to check if all days in the window are above threshold
+        # axis=0 means we check along the time dimension for each asset
+        all_above_threshold = np.all(above_threshold, axis=0)
+        
+        # Convert boolean results to int (1 for True, 0 for False)
+        out[:] = all_above_threshold.astype(int)

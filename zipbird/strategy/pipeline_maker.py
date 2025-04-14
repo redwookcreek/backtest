@@ -217,3 +217,11 @@ class PipelineMaker:
             factor=factor_utils.MomentumSurgeFactor(
                 surge_percent=surge_percent,
                 mask=self.universe))
+    
+    def add_consecutive_days_above_threshold(self, days, threshold):
+        return self._maybe_add_column(
+            name=col_name.consecutive_days_above_threshold(days, threshold),
+            factor=factor_utils.CloseAboveConsecutive(
+                window_length=days,
+                threshold=threshold,
+                mask=self.universe))

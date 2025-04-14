@@ -267,7 +267,7 @@ fig.show()
             yref='paper',
             xanchor='center',
             x=0.5,
-        )
+        ),
     )
     fig.add_annotation(
         x=start_date_str,

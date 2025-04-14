@@ -61,3 +61,6 @@ def sma_cross_times(fast, slow, master, period):
 
 def one_day_mom_surge(surge_percent):
     return f'1d_mom_surge_{surge_percent}'
+
+def consecutive_days_above_threshold(days, threshold):
+    return f'{days}_days_above_{threshold}'

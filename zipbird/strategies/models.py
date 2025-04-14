@@ -1,6 +1,7 @@
 from zipbird.position_manager.no_order_position_sizer import NoOrderPositionSizer
 from zipbird.position_manager.rotation_position_sizer import RotationPositionSizer
 from zipbird.position_manager.atr_position_sizer import ATRPositionSizer
+from zipbird.position_manager.full_position_sizer import FullPositionSizer
 from zipbird.position_manager.split_target_position_sizer import SplitTargetPositionSizer
 from zipbird.strategy.indicator_loader import IndicatorLoader
 from zipbird.strategy.strategy_executor import StrategyExecutor
@@ -19,6 +20,8 @@ from zipbird.strategies.s32_200_cross import S32Cross200MA
 from zipbird.strategies.s33_3ma import S33MAConsolidation
 from zipbird.strategies.s34_mom import S34MOM
 from zipbird.strategies.s36_one_day_mom_surge import S36OneDayMOMSurge
+from zipbird.strategies.s37_spy_trin import S37SpyTrin
+
 
 PARAMS_S1_WEEKLY_SP500 = dict(
     market_filter_sma_period=200,
@@ -378,18 +381,20 @@ PARAMS_S34_MOM = dict(
 
     roc_period=400,
     adx_period=14,
-    highest_high_period=25,
+    highest_high_period=100,
+    sma_period=100,
+    market_filter_sma_period=200,
     cross_high_close_percent=0.05,
     green_bar_limit=0.2,
     atr_period=10,
 
-    max_positions=10,
-    fraction_risk=0.01,  # 2% risk per position
+    max_positions=20,
+    fraction_risk=0.005,  # 2% risk per position
     stop_loss_atr_multiple=3,
     #trailing_atr_multiple=2,
     #stop_loss_days=20,
     trailing_stop_percent=0.2,
-    max_equity_per_position = 0.1,  # max 10% equity per position
+    max_equity_per_position = 0.05,  # max 10% equity per position
     #open_stop_percent = 0.01, # open with a stop order 1% higher than last close
 )
 SE_S34_3MA = StrategyExecutor(
@@ -423,6 +428,24 @@ SE_S36_ONE_DAY_MOM_SURGE = StrategyExecutor(
     position_sizer=ATRPositionSizer(PARAMS_S36_ONE_DAY_MOM_SURGE)
 )
 
+PARAMS_S37_SPY_TRIN = dict(
+    min_price=1.0,
+    dollar_volume_rank_window=100,
+    dollar_volume_rank_max=1000,
+
+    rsi_period=2,
+    sma_period=200,
+    trin_days_above=3,
+    trin_threshold=1,
+
+    rsi_lower_limit=50,
+    rsi_upper_limit=65,
+)
+
+SE_S37_SPY_TRIN = StrategyExecutor(
+    strategy=S37SpyTrin('s37-spy-trin', PARAMS_S37_SPY_TRIN),
+    position_sizer=FullPositionSizer()
+)
 
 SE_SIGNAL_ONLY = StrategyExecutor(
     strategy=S26SixDaySurgeShort(strategy_name='s26', params=PARAMS_S26_6DAY_SURGE_SHORT),
@@ -448,6 +471,7 @@ STRATEGY_FUNC_MAP = {
     's33_3ma': SE_S33_3MA,
     's34_mom': SE_S34_3MA,
     's36_one_day_mom_surge': SE_S36_ONE_DAY_MOM_SURGE,
+    's37_spy_trin': SE_S37_SPY_TRIN,
     'signal_only': SE_SIGNAL_ONLY,
     'ind_loader': IndicatorLoader()
 }
